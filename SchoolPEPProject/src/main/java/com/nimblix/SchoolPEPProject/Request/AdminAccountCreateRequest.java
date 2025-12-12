@@ -1,0 +1,18 @@
+package com.nimblix.SchoolPEPProject.Request;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@RequiredArgsConstructor
+public class AdminAccountCreateRequest {
+    private String adminMobileNo;
+    private String adminName;
+    private String email;
+    private String password;
+    private String reEnterPassword;
+    private String designation;
+
+}
