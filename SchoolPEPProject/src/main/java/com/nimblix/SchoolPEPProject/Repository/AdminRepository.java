@@ -9,5 +9,7 @@ public interface AdminRepository extends JpaRepository<Admin,Long> {
 
     boolean existsByEmailId(String email);
 
-    boolean existsByMobileNumber(String adminMobileNo);
+    Admin findByIdAndSchoolId(Long adminId, Long schoolId);
+
+    boolean existsByMobile(String adminMobileNo);
 }

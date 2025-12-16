@@ -1,7 +1,9 @@
 package com.nimblix.SchoolPEPProject.Controller;
 
+import com.nimblix.SchoolPEPProject.Model.Teacher;
 import com.nimblix.SchoolPEPProject.Request.ClassroomRequest;
 import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
+import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
 import com.nimblix.SchoolPEPProject.Service.TeacherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +23,17 @@ public class TeacherController {
     }
 
     @GetMapping("/getTeacher")
-    public ResponseEntity<?> getTeacherDetails(@RequestParam Long teacherId) {
-        return teacherService.getTeacherDetails(teacherId);
+    public ResponseEntity<TeacherDetailsResponse> getTeacherDetails(
+            @RequestParam Long teacherId) {
+
+        TeacherDetailsResponse response =
+                teacherService.getTeacherDetails(teacherId);
+
+        return ResponseEntity.ok(response);
     }
+
+
+
 
     @PostMapping("/createClassroom")
     public ResponseEntity<Map<String, String>> createClassroom(@RequestBody ClassroomRequest request) {

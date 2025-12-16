@@ -4,57 +4,20 @@ import com.nimblix.SchoolPEPProject.Util.SchoolUtil;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Entity(name = "student")
+@Entity
+@Table(name = "students")
+@DiscriminatorValue("STUDENT")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class Student {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "full_name")
-    private String fullName;
-
-    @Column(name = "email")
-    private String email;
+public class Student extends User {
 
     @Column(name = "class_id")
     private Long classId;
 
     @Column(name = "section")
     private String section;
-
-    @Column(name = "password")
-    private String password;
-
-    @Column(name = "schoolId")
-    private Long schoolId;
-
-    @Column(name = "status")
-    private String status;
-
-    @Column(name = "created_time")
-    private String createdTime;
-
-    @Column(name = "updated_time")
-    private String updatedTime;
-
-
-    @PrePersist
-    protected void onCreate(){
-        createdTime= SchoolUtil.changeCurrentTimeToLocalDateFromGmtToISTInString();
-        updatedTime= SchoolUtil.changeCurrentTimeToLocalDateFromGmtToISTInString();
-
-    }
-
-    @PreUpdate
-    protected void onUpdate(){
-        this.updatedTime= SchoolUtil.changeCurrentTimeToLocalDateFromGmtToISTInString();
-
-
-    }
 
 }

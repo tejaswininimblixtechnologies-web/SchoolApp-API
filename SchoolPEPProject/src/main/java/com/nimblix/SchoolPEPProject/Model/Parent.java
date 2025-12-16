@@ -4,71 +4,25 @@ package com.nimblix.SchoolPEPProject.Model;
 import com.nimblix.SchoolPEPProject.Enum.ParentRole;
 import com.nimblix.SchoolPEPProject.Util.SchoolUtil;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Data
+@Table(name = "parents")
+@DiscriminatorValue("PARENT")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Parent {
+public class Parent extends User {
 
-
-
-
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long parentId;
-
-    @Column(name = "full_name")
-    private String fullName;
-
-    @Column(name="email_id" ,unique = true)
-    private String emailId;
-
-
-    @Column(name = "contactNumber")
-    private String contactNumber;
-
-    @Column(name="address")
-    private String address;
-
-    @Column(name = "password")
-    private String password;
-
-    @Column(name = "school_id")
-    private Long schoolId;
-
-    @Column(name = "parentRole")
     @Enumerated(EnumType.STRING)
-    private ParentRole role;
+    private ParentRole parentRole;
 
     @OneToOne
     @JoinColumn(name = "student_id")
     private Student student;
 
-    @Column(name = "created_time")
-    private String createdTime;
-
-    @Column(name = "updated_time")
-    private String updatedTime;
-
-
-    @PrePersist
-    protected void onCreate(){
-        createdTime= SchoolUtil.changeCurrentTimeToLocalDateFromGmtToISTInString();
-        updatedTime= SchoolUtil.changeCurrentTimeToLocalDateFromGmtToISTInString();
-
-    }
-
-    @PreUpdate
-    protected void onUpdate(){
-        this.updatedTime= SchoolUtil.changeCurrentTimeToLocalDateFromGmtToISTInString();
-
-
-    }
-
-
+    @Column(name = "address")
+    private String address;
 }
+

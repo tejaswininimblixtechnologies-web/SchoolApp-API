@@ -1,25 +1,26 @@
 package com.nimblix.SchoolPEPProject.ServiceImpl;
 
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
+import com.nimblix.SchoolPEPProject.Exception.UserNotFoundException;
 import com.nimblix.SchoolPEPProject.Model.Classroom;
 import com.nimblix.SchoolPEPProject.Model.Role;
 import com.nimblix.SchoolPEPProject.Model.Teacher;
-import com.nimblix.SchoolPEPProject.Model.User;
 import com.nimblix.SchoolPEPProject.Repository.ClassroomRepository;
 import com.nimblix.SchoolPEPProject.Repository.RoleRepository;
 import com.nimblix.SchoolPEPProject.Repository.TeacherRepository;
 import com.nimblix.SchoolPEPProject.Repository.UserRepository;
 import com.nimblix.SchoolPEPProject.Request.ClassroomRequest;
 import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
+import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
 import com.nimblix.SchoolPEPProject.Service.TeacherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -29,22 +30,19 @@ public class TeacherServiceImpl implements TeacherService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final ClassroomRepository classroomRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Map<String, String> registerTeacher(TeacherRegistrationRequest request) {
 
         Map<String, String> response = new HashMap<>();
 
-        if (request.getFirstName() == null || request.getFirstName().isBlank() ||
-                request.getEmail() == null || request.getEmail().isBlank() ||
-                request.getPassword() == null || request.getPassword().isBlank()) {
+        if (request.getFirstName() == null || request.getFirstName().isBlank()
+                || request.getEmail() == null || request.getEmail().isBlank()
+                || request.getPassword() == null || request.getPassword().isBlank()) {
 
-            response.put(SchoolConstants.MESSAGE, "Missing required fields (firstName, email, password)");
-            return response;
-        }
-
-        if (userRepository.existsByEmailId(request.getEmail())) {
-            response.put(SchoolConstants.MESSAGE, "Email already registered");
+            response.put(SchoolConstants.MESSAGE,
+                    "Missing required fields (firstName, email, password)");
             return response;
         }
 
@@ -53,30 +51,22 @@ public class TeacherServiceImpl implements TeacherService {
             return response;
         }
 
-
-
-        User user = new User();
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setEmailId(request.getEmail());
-        user.setPassword(request.getPassword());
-        user.setDesignation(SchoolConstants.TEACHER_ROLE);
-        user.setStatus(SchoolConstants.ACTIVE);
-        user.setMobile(null);
-        user.setIsLogin(false);
-
         Role teacherRole = roleRepository.findByRoleName(SchoolConstants.TEACHER_ROLE);
-        user.setRole(teacherRole);
 
-        userRepository.save(user);
-
+        // ✅ Create ONLY Teacher
         Teacher teacher = new Teacher();
         teacher.setPrefix(request.getPrefix());
-        teacher.setPassword(request.getPassword());
         teacher.setFirstName(request.getFirstName());
         teacher.setLastName(request.getLastName());
         teacher.setEmailId(request.getEmail());
-        teacher.setSchoolId(1L); // TODO: pass schoolId from admin login
+        teacher.setPassword(passwordEncoder.encode(request.getPassword()));
+        teacher.setSchoolId(1L); // TODO: from logged-in admin
+
+        // inherited from User
+        teacher.setRole(teacherRole);
+        teacher.setDesignation(SchoolConstants.TEACHER_ROLE);
+        teacher.setStatus(SchoolConstants.ACTIVE);
+        teacher.setIsLogin(false);
 
         teacherRepository.save(teacher);
 
@@ -84,11 +74,19 @@ public class TeacherServiceImpl implements TeacherService {
         return response;
     }
 
-    @Override
-    public ResponseEntity<?> getTeacherDetails(Long teacherId) {
-     Optional<Teacher> teacher= teacherRepository.findById(teacherId);
-     return ResponseEntity.ok(teacher);
-    }
+//    @Override
+//    public ResponseEntity<Teacher> getTeacherDetails(Long teacherId) {
+//
+//        if (teacherId == null) {
+//            throw new IllegalArgumentException("Teacher ID must not be null");
+//        }
+//
+//        return teacherRepository.findById(teacherId)
+//                .orElseThrow(() ->
+//                        new UserNotFoundException("Teacher not found with id: " + teacherId));
+//    }
+
+
 
     private boolean isEmpty(String s) {
         return s == null || s.trim().isEmpty();
@@ -141,6 +139,32 @@ public class TeacherServiceImpl implements TeacherService {
         return ResponseEntity.ok(response); // 200
     }
 
+    @Override
+    public TeacherDetailsResponse getTeacherDetails(Long teacherId) {
+
+        if (teacherId == null || teacherId <= 0) {
+            throw new IllegalArgumentException("Teacher ID must be a positive number");
+        }
+
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "Teacher not found with id: " + teacherId
+                        ));
+
+        return TeacherDetailsResponse.builder()
+                .id(teacher.getId())
+                .firstName(teacher.getFirstName())
+                .lastName(teacher.getLastName())
+                .fullName(teacher.getFullName())
+                .emailId(teacher.getEmailId())
+                .mobile(teacher.getMobile())
+                .prefix(teacher.getPrefix())
+                .designation(teacher.getDesignation())
+                .gender(teacher.getGender())
+                .status(teacher.getStatus())
+                .build();
+    }
 
 
 }
