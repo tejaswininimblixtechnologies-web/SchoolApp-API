@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
+@RequestMapping("/school")
 @RestController
-@RequestMapping("/school/user")
 @RequiredArgsConstructor
-public class UserController {
-
+public class SchoolController {
     private final SchoolService schoolService;
+
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> registerSchool(
             @RequestBody SchoolRegistrationRequest request) {

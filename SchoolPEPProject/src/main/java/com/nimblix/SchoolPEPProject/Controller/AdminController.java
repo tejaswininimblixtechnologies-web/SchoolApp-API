@@ -3,6 +3,7 @@ package com.nimblix.SchoolPEPProject.Controller;
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
 import com.nimblix.SchoolPEPProject.Model.Student;
 import com.nimblix.SchoolPEPProject.Request.AdminAccountCreateRequest;
+import com.nimblix.SchoolPEPProject.Response.AdminProfileResponse;
 import com.nimblix.SchoolPEPProject.Service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -76,6 +77,15 @@ public class AdminController {
             errorResponse.put(SchoolConstants.MESSAGE, "Failed to fetch student list: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
+    }
+
+
+    @GetMapping("/profile")
+    public AdminProfileResponse getAdminProfile(
+            @RequestParam Long adminId,
+            @RequestParam Long schoolId
+    ) {
+        return adminService.getAdminProfile(adminId, schoolId);
     }
 
     }

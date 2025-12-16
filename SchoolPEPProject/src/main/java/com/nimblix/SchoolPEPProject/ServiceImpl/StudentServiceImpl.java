@@ -1,5 +1,6 @@
 package com.nimblix.SchoolPEPProject.ServiceImpl;
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
+import com.nimblix.SchoolPEPProject.Exception.UserNotFoundException;
 import com.nimblix.SchoolPEPProject.Model.Role;
 import com.nimblix.SchoolPEPProject.Model.Student;
 import com.nimblix.SchoolPEPProject.Model.User;
@@ -7,11 +8,14 @@ import com.nimblix.SchoolPEPProject.Repository.RoleRepository;
 import com.nimblix.SchoolPEPProject.Repository.StudentRepository;
 import com.nimblix.SchoolPEPProject.Repository.UserRepository;
 import com.nimblix.SchoolPEPProject.Request.StudentRegistrationRequest;
+import com.nimblix.SchoolPEPProject.Response.StudentDetailsResponse;
 import com.nimblix.SchoolPEPProject.Service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -19,48 +23,39 @@ import org.springframework.stereotype.Service;
 public class StudentServiceImpl implements StudentService {
 
     private final PasswordEncoder passwordEncoder;
-    private final UserRepository userRepository;
     private final StudentRepository studentRepository;
     private final RoleRepository roleRepository;
 
-    public ResponseEntity<?> registerStudent(StudentRegistrationRequest request) { // Validate password match
+    @Override
+    public ResponseEntity<?> registerStudent(StudentRegistrationRequest request) {
+
         if (!request.getPassword().equals(request.getReEnterPassword())) {
-            return ResponseEntity.badRequest().body("Password and Re-Enter Password do not match!");
+            return ResponseEntity.badRequest()
+                    .body("Password and Re-Enter Password do not match!");
         }
 
-        // Encode password
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        if (studentRepository.existsByEmailId(request.getEmail())) {
+            return ResponseEntity.badRequest()
+                    .body("Email already registered!");
+        }
 
-        // Save Student
+        // 3️⃣ Fetch role
+        Role studentRole = roleRepository.findByRoleName(SchoolConstants.STUDENT);
+
+        // 4️⃣ Create ONLY Student
         Student student = new Student();
         student.setFullName(request.getFullName());
-        student.setEmail(request.getEmail());
-        student.setPassword(encodedPassword);
+        student.setEmailId(request.getEmail());
+        student.setPassword(passwordEncoder.encode(request.getPassword()));
         student.setSchoolId(request.getSchoolId());
         student.setStatus(SchoolConstants.ACTIVE);
+        student.setIsLogin(false);
+        student.setDesignation(SchoolConstants.STUDENT);
+        student.setRole(studentRole);
 
-        studentRepository.save(student);
+        Student savedStudent = studentRepository.save(student);
 
-        Role studentRole = roleRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Role not found"));
-
-        // Save User (Login table)
-        User user = new User();
-        user.setFullName(request.getFullName());
-        user.setEmailId(request.getEmail());
-        user.setPassword(encodedPassword);
-        user.setStatus(SchoolConstants.ACTIVE);
-        user.setIsLogin(false);
-        user.setRole(studentRole);
-        user.setDesignation(SchoolConstants.STUDENT);
-        userRepository.save(user);
-
-        return ResponseEntity.ok("Registration Successful");
-    }
-
-    @Override
-    public Student getStudentListByStudentId(Long studentId) {
-        return studentRepository.findById(studentId).orElse(null);
+        return ResponseEntity.ok("Student registered successfully with ID: " + savedStudent.getId());
     }
 
     @Override
@@ -74,7 +69,7 @@ public class StudentServiceImpl implements StudentService {
         }
 
         if (request.getEmail() != null) {
-            existingStudent.setEmail(request.getEmail());
+            existingStudent.setEmailId(request.getEmail());
         }
 
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
@@ -83,8 +78,9 @@ public class StudentServiceImpl implements StudentService {
                 throw new RuntimeException("Password and Re-Enter Password do not match!");
             }
 
-            String encodedPassword = passwordEncoder.encode(request.getPassword());
-            existingStudent.setPassword(encodedPassword);
+            existingStudent.setPassword(
+                    passwordEncoder.encode(request.getPassword())
+            );
         }
 
         if (request.getSchoolId() != null) {
@@ -94,15 +90,34 @@ public class StudentServiceImpl implements StudentService {
         studentRepository.save(existingStudent);
     }
 
+    @Override
+    public List<StudentDetailsResponse> getStudentsBySchoolId(Long schoolId) {
 
-//    @Override
-//    public void deleteStudent(Long studentId) {
-//
-//        Student student = studentRepository.findById(studentId)
-//                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
-//
-//        studentRepository.delete(student);
-//    }
+        if (schoolId == null || schoolId <= 0) {
+            throw new IllegalArgumentException("School ID must be valid");
+        }
+
+        List<Student> students = studentRepository.findBySchoolId(schoolId);
+
+        if (students.isEmpty()) {
+            throw new UserNotFoundException(
+                    "No students found for schoolId: " + schoolId
+            );
+        }
+
+        return students.stream()
+                .map(student -> StudentDetailsResponse.builder()
+                        .id(student.getId())
+                        .fullName(student.getFullName())
+                        .emailId(student.getEmailId())
+                        .mobile(student.getMobile())
+                        .status(student.getStatus())
+                        .classId(student.getClassId())
+                        .section(student.getSection())
+                        .build()
+                )
+                .toList();
+    }
 
 
     @Override
@@ -110,8 +125,9 @@ public class StudentServiceImpl implements StudentService {
 
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
-        student.setStatus(SchoolConstants.IN_ACTIVE);
 
+        // Soft delete
+        student.setStatus(SchoolConstants.IN_ACTIVE);
         studentRepository.save(student);
     }
 }

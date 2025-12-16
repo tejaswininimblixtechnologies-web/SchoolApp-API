@@ -3,6 +3,7 @@ package com.nimblix.SchoolPEPProject.Controller;
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
 import com.nimblix.SchoolPEPProject.Model.Student;
 import com.nimblix.SchoolPEPProject.Request.StudentRegistrationRequest;
+import com.nimblix.SchoolPEPProject.Response.StudentDetailsResponse;
 import com.nimblix.SchoolPEPProject.Service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -33,7 +35,7 @@ public class StudentController {
             studentService.registerStudent(request);
 
             response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS);
-            response.put(SchoolConstants.MESSAGE, "Student Registration Successful");
+            response.put(SchoolConstants.MESSAGE, "Student Registration Successful!");
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -48,27 +50,24 @@ public class StudentController {
  */
 
     @GetMapping("/details")
-    public ResponseEntity<?> getStudentDetailsByStudentId(@RequestParam Long studentId) {
+    public ResponseEntity<Map<String, Object>> getStudentsBySchoolId(
+            @RequestParam Long schoolId) {
+
+        List<StudentDetailsResponse> students =
+                studentService.getStudentsBySchoolId(schoolId);
 
         Map<String, Object> response = new HashMap<>();
-        Student student = studentService.getStudentListByStudentId(studentId);
-
-        if (student == null) {
-            response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_FAILURE);
-            response.put(SchoolConstants.MESSAGE, SchoolConstants.STUDENT_NOT_FOUND);
-            response.put("data", null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
-
         response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS);
-        response.put(SchoolConstants.MESSAGE, "Student details fetched successfully");
-        response.put("data", student);
+        response.put(SchoolConstants.MESSAGE, "Students fetched successfully");
+        response.put("data", students);
+
         return ResponseEntity.ok(response);
     }
 
 
 
-        @PostMapping("/update")
+
+    @PostMapping("/update")
         public ResponseEntity<?> updateStudent(
                 @RequestParam Long studentId,
                 @RequestBody StudentRegistrationRequest request) {
