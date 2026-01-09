@@ -21,6 +21,7 @@ import java.util.Map;
 @RequestMapping("/teacher")
 @RequiredArgsConstructor
 public class TeacherController {
+
     private final TeacherService teacherService;
 
     @PostMapping("/teacherRegister")
@@ -136,5 +137,40 @@ public class TeacherController {
         return ResponseEntity.ok(teacherService.onboardSubject(request));
     }
 
+    @PostMapping("/updateOnboardedSubject")
+    public ResponseEntity<Map<String, String>> updateOnboardSubject(
+            @RequestBody OnboardSubjectRequest request
+    ) {
+
+        if (request == null || request.getSubjectId() == null) {
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            SchoolConstants.STATUS, SchoolConstants.STATUS_ERORR,
+                            SchoolConstants.MESSAGE, "Request body or Subject ID is missing"
+                    )
+            );
+        }
+
+        return ResponseEntity.ok(teacherService.updateOnboardSubject(request));
+    }
+
+    @PostMapping("/deleteAssignmentByIdAndSubjectId")
+    public ResponseEntity<Map<String, String>> deleteAssignment(
+            @RequestParam Long assignmentId,
+            @RequestParam Long subjectId
+    ) {
+        if (assignmentId == null || subjectId == null) {
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            SchoolConstants.STATUS, SchoolConstants.STATUS_ERORR,
+                            SchoolConstants.MESSAGE, "Assignment ID or Subject ID is missing"
+                    )
+            );
+        }
+
+        return ResponseEntity.ok(
+                teacherService.deleteAssignment(assignmentId, subjectId)
+        );
+    }
 
 }

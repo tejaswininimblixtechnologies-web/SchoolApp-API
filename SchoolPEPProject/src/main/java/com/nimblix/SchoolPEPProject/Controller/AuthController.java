@@ -12,8 +12,8 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/auth")
@@ -49,7 +49,7 @@ public class AuthController {
 
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "User not found or inactive"));
+                        .body(Map.of(SchoolConstants.MESSAGE, "User not found or inactive"));
             }
 
             String dbRole = user.getRole().getRoleName().toUpperCase();
@@ -58,7 +58,7 @@ public class AuthController {
             // 4️⃣ Role validation
             if (!dbRole.equals(requestRole)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "Role mismatch"));
+                        .body(Map.of(SchoolConstants.MESSAGE, SchoolConstants.ROLE_MISMATCH));
             }
 
             // 5️⃣ Password check ONLY for STUDENT
@@ -66,7 +66,7 @@ public class AuthController {
 
                 if (request.getPassword() == null || request.getPassword().isBlank()) {
                     return ResponseEntity.badRequest()
-                            .body(Map.of("message", "Password is required for student login"));
+                            .body(Map.of(SchoolConstants.MESSAGE, "Password is required for student login"));
                 }
 
                 authenticationManager.authenticate(
@@ -100,11 +100,11 @@ public class AuthController {
 
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Invalid password"));
+                    .body(Map.of(SchoolConstants.MESSAGE, "Invalid password"));
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Login failed"));
+                    .body(Map.of(SchoolConstants.MESSAGE, SchoolConstants.LOGIN_FAILED));
         }
     }
 

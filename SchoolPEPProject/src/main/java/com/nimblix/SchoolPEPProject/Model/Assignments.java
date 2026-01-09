@@ -32,6 +32,9 @@ public class Assignments {
     @Column(name = "school_id")
     private Long schoolId;
 
+    @Column(name = "status")
+    private String status;
+
     @Column(name = "class_id")
     private Long classId;
 

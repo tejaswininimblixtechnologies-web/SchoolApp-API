@@ -29,4 +29,9 @@ public interface TeacherService {
     Map<String, String> onboardSubject(OnboardSubjectRequest request);
 
     Map<String, String> updateAssignment(CreateAssignmentRequest request, MultipartFile[] files);
+
+    Map<String, String> updateOnboardSubject(OnboardSubjectRequest request);
+
+    Map<String, String> deleteAssignment(Long assignmentId, Long subjectId);
+
 }

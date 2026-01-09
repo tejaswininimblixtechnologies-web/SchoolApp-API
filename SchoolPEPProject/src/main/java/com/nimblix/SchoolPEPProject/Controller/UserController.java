@@ -4,6 +4,7 @@ import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
 import com.nimblix.SchoolPEPProject.Model.School;
 import com.nimblix.SchoolPEPProject.Request.SchoolRegistrationRequest;
 import com.nimblix.SchoolPEPProject.Service.SchoolService;
+import com.nimblix.SchoolPEPProject.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.Map;
 public class UserController {
 
     private final SchoolService schoolService;
+    private final UserService userService;
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> registerSchool(
             @RequestBody SchoolRegistrationRequest request) {
