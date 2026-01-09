@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class OnboardSubjectRequest {
+    private Long subjectId;
     private Long schoolId;
     private Long classRoomId;
     private Long teacherId;

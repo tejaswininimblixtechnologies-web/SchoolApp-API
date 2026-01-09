@@ -1,4 +1,4 @@
-package com.nimblix.SchoolPEPProject.Util;
+package com.nimblix.SchoolPEPProject.Enum;
 
 public enum UserType {
     ADMIN("A"),

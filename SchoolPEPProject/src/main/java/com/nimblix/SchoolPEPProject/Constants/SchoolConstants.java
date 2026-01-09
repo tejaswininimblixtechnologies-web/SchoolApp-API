@@ -8,6 +8,9 @@ public class SchoolConstants {
     public static final String STATUS_ERORR ="erorr" ;
     public static final String ASSIGNMENT_CREATED_SUCCESSFULLY ="Assignment created successfully" ;
     public static final String ASSIGNMENT_ID ="assignmentId" ;
+    public static final String PARENT = "PARENT";
+    public static final String LOGIN_FAILED ="Login failed" ;
+    public static String ROLE_MISMATCH ="Role mismatch" ;
     public static String PAID = "PAID";
     public static String SUBSCRIPTION_ACTIVATED_SUCCESSFULLY ="Subscription activated successfully" ;
     public static String SUBSCRIPTION_EXPIRED = "Subscription expired";

@@ -13,7 +13,8 @@ import com.nimblix.SchoolPEPProject.Response.MultipleImageResponse;
 import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
 import com.nimblix.SchoolPEPProject.Service.TeacherService;
 import com.nimblix.SchoolPEPProject.Util.UserIdGeneratorUtil;
-import com.nimblix.SchoolPEPProject.Util.UserType;
+import com.nimblix.SchoolPEPProject.Enum.UserType;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -81,7 +82,7 @@ public class TeacherServiceImpl implements TeacherService {
         teacher.setRole(teacherRole);
         teacher.setDesignation(SchoolConstants.TEACHER_ROLE);
         teacher.setStatus(SchoolConstants.ACTIVE);
-        teacher.setIsLogin(false);
+        teacher.setIsLogin(Boolean.FALSE);
 
         Teacher savedTeacher = teacherRepository.save(teacher);
 
@@ -398,5 +399,80 @@ public class TeacherServiceImpl implements TeacherService {
         );
     }
 
+    @Override
+    public Map<String, String> updateOnboardSubject(OnboardSubjectRequest request) {
+
+        // 1️⃣ Validate subject exists
+        Subjects subject = subjectRepository.findById(request.getSubjectId())
+                .orElseThrow(() -> new IllegalArgumentException("Subject not found"));
+
+        // 2️⃣ Validate school
+        if (!schoolRepository.existsById(request.getSchoolId())) {
+            throw new IllegalArgumentException("Invalid School ID");
+        }
+
+        // 3️⃣ Validate class belongs to school
+        if (!classroomRepository.existsByIdAndSchoolId(
+                request.getClassRoomId(),
+                request.getSchoolId())) {
+            throw new IllegalArgumentException("Invalid Class ID for given School");
+        }
+
+        // 4️⃣ Validate teacher
+        Teacher teacher = teacherRepository.findById(request.getTeacherId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Teacher ID"));
+
+        // 5️⃣ Prevent duplicate subject for same class & teacher
+        boolean duplicateExists =
+                subjectRepository
+                        .findBySubjectNameAndClassRoomIdAndTeacher_Id(
+                                request.getSubjectName().trim(),
+                                request.getClassRoomId(),
+                                request.getTeacherId()
+                        )
+                        .filter(existing -> !existing.getId().equals(request.getSubjectId()))
+                        .isPresent();
+
+        if (duplicateExists) {
+            return Map.of(
+                    SchoolConstants.STATUS, SchoolConstants.STATUS_ERORR,
+                    SchoolConstants.MESSAGE, "Subject already exists for this class"
+            );
+        }
+
+        // 6️⃣ Update subject details
+        subject.setSubjectName(request.getSubjectName().trim());
+        subject.setCode(request.getSubjectCode());
+        subject.setSubDescription(request.getSubjectDescription());
+        subject.setTeacher(teacher);
+        subject.setClassRoomId(request.getClassRoomId());
+        subject.setTotalMarks(request.getTotalMarks());
+
+        subjectRepository.save(subject);
+
+        return Map.of(
+                SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS,
+                SchoolConstants.MESSAGE, "Subject updated successfully"
+        );
+    }
+
+    @Transactional
+    public Map<String, String> deleteAssignment(Long assignmentId, Long subjectId) {
+
+        Assignments assignment = assignmentsRepository
+                .findByIdAndSubjectId(assignmentId, subjectId)
+                .orElseThrow(() ->
+                        new RuntimeException("Assignment not found for the given subject")
+                );
+
+
+        assignment.setStatus(SchoolConstants.IN_ACTIVE);
+        assignmentsRepository.save(assignment);
+
+        return Map.of(
+                SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS,
+                SchoolConstants.MESSAGE, "Assignment deleted successfully"
+        );
+    }
 
 }

@@ -9,7 +9,7 @@ public class UserIdGeneratorUtil {
     /**
      * Generates business userId like T12, S105, A1
      */
-    public static String generateUserId(com.nimblix.SchoolPEPProject.Util.UserType userType, Long dbId) {
+    public static String generateUserId(com.nimblix.SchoolPEPProject.Enum.UserType userType, Long dbId) {
 
         if (dbId == null) {
             throw new IllegalArgumentException("DB id cannot be null");
@@ -21,7 +21,7 @@ public class UserIdGeneratorUtil {
     /**
      * Optional: zero padded IDs (T001, S045)
      */
-    public static String generateUserId(com.nimblix.SchoolPEPProject.Util.UserType userType, Long dbId, int padding) {
+    public static String generateUserId(com.nimblix.SchoolPEPProject.Enum.UserType userType, Long dbId, int padding) {
 
         if (dbId == null) {
             throw new IllegalArgumentException("DB id cannot be null");
