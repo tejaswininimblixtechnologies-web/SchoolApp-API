@@ -33,6 +33,15 @@ public class Attendance {
 
     @Column(name = "updated_time")
     private String updatedTime;
+    @Column(name = "school_id")
+    private Long schoolId;
+
+    @Column(name = "class_id")
+    private Long classId;
+
+    @Column(name = "section")
+    private String section;
+
 
 
     @PrePersist
