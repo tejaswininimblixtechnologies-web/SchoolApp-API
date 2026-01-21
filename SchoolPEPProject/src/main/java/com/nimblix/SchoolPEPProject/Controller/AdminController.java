@@ -5,6 +5,7 @@ import com.nimblix.SchoolPEPProject.Model.Student;
 import com.nimblix.SchoolPEPProject.Request.AdminAccountCreateRequest;
 import com.nimblix.SchoolPEPProject.Response.AdminProfileResponse;
 import com.nimblix.SchoolPEPProject.Service.AdminService;
+import com.nimblix.SchoolPEPProject.Request.AdminProfileUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,11 +82,26 @@ public class AdminController {
 
 
     @GetMapping("/profile")
-    public AdminProfileResponse getAdminProfile(
-            @RequestParam Long adminId,
-            @RequestParam Long schoolId
+    public ResponseEntity<AdminProfileResponse> getAdminProfile() {
+        return ResponseEntity.ok(adminService.getLoggedInAdminProfile());
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateAdminProfile(
+            @RequestBody AdminProfileUpdateRequest request
     ) {
-        return adminService.getAdminProfile(adminId, schoolId);
+        adminService.updateLoggedInAdminProfile(request);
+        return ResponseEntity.ok(
+                Map.of("message", "Profile updated successfully")
+        );
+    }
+
+    @DeleteMapping("/profile")
+    public ResponseEntity<?> deleteAdminProfile() {
+        adminService.softDeleteLoggedInAdmin();
+        return ResponseEntity.ok(
+                Map.of("message", "Admin account deactivated")
+        );
     }
 
     }
