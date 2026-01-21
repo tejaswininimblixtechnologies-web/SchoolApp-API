@@ -3,9 +3,11 @@ package com.nimblix.SchoolPEPProject.Repository;
 import com.nimblix.SchoolPEPProject.Model.Subjects;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
-public interface SubjectRepository extends JpaRepository<Subjects,Long> {
+public interface SubjectRepository extends JpaRepository<Subjects, Long> {
+
     boolean existsByIdAndClassRoomId(Long id, Long classRoomId);
 
     Optional<Subjects> findBySubjectNameAndClassRoomIdAndTeacher_Id(
@@ -13,4 +15,6 @@ public interface SubjectRepository extends JpaRepository<Subjects,Long> {
             Long classRoomId,
             Long teacherId
     );
+
+    List<Subjects> findBySchoolIdOrderBySubjectNameAsc(Long schoolId);
 }

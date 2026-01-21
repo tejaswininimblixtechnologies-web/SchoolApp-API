@@ -17,7 +17,7 @@ public class TeacherDetailsResponse {
     private String emailId;
     private String mobile;
     private String prefix;
-    private Designation designation;
+    private String designation;
     private String gender;
     private String status;
 }

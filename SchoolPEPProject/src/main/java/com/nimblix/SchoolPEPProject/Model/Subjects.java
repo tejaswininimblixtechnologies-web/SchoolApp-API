@@ -25,7 +25,7 @@ public class Subjects {
     @Column(name = "subject_code")
     private String code;
 
-    @Column(name = "sub_desription")
+    @Column(name = "sub_description")
     private String subDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
