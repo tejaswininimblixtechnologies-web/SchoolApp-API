@@ -21,5 +21,5 @@ public class FeesPayment {
 
     private Double amount;
 
-    private String status; // PAID / PENDING
+    private String status;
 }
