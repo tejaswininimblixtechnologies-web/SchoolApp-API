@@ -14,10 +14,15 @@ public class FinanceServiceImpl implements FinanceService {
     }
 
     @Override
+    public Double getTotalPendingFees(Long schoolId) {
+        Double assigned = feesPaymentRepository.getTotalAssignedAmount(schoolId);
+        Double paid = feesPaymentRepository.getTotalPaidAmount(schoolId);
+        return assigned - paid;
+    }
+
+    @Override
     public Double getTotalFeesCollected(Long schoolId) {
-        if (schoolId == null) {
-            throw new IllegalArgumentException("School ID is required");
-        }
-        return feesPaymentRepository.getTotalCollectedFees(schoolId);
+        return feesPaymentRepository.getTotalPaidAmount(schoolId);
     }
 }
+

@@ -17,17 +17,23 @@ public class FinanceController {
         this.financeService = financeService;
     }
 
-    @GetMapping("/collected/total")
-    public ResponseEntity<Map<String, Object>> getTotalFeesCollected(
+
+    @GetMapping("/pending/total")
+    public ResponseEntity<Double> getPendingFees(
             @RequestParam Long schoolId) {
 
-        Double totalAmount = financeService.getTotalFeesCollected(schoolId);
+        return ResponseEntity.ok(
+                financeService.getTotalPendingFees(schoolId)
+        );
+    }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "SUCCESS");
-        response.put("schoolId", schoolId);
-        response.put("totalCollectedAmount", totalAmount);
 
-        return ResponseEntity.ok(response);
+    @GetMapping("/collected/total")
+    public ResponseEntity<Double> getCollectedFees(
+            @RequestParam Long schoolId) {
+
+        return ResponseEntity.ok(
+                financeService.getTotalFeesCollected(schoolId)
+        );
     }
 }
