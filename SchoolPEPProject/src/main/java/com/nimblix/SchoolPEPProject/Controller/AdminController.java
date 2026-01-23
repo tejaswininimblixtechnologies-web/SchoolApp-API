@@ -3,8 +3,11 @@ package com.nimblix.SchoolPEPProject.Controller;
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
 import com.nimblix.SchoolPEPProject.Model.Student;
 import com.nimblix.SchoolPEPProject.Request.AdminAccountCreateRequest;
+import com.nimblix.SchoolPEPProject.Request.FeesPaymentRequest;
 import com.nimblix.SchoolPEPProject.Response.AdminProfileResponse;
 import com.nimblix.SchoolPEPProject.Service.AdminService;
+import com.nimblix.SchoolPEPProject.Service.FinanceService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +23,17 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final FinanceService financeService;
 
     @PostMapping("/adminlogin")
     public ResponseEntity<String> submitEmail(@RequestBody String email) {
         String response = adminService.submitEmail(email);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/fees/pay")
+    public ResponseEntity<?> payFees(@RequestBody FeesPaymentRequest request) {
+        return ResponseEntity.ok(financeService.payFees(request));
     }
 
     @PostMapping("/adminregister")
@@ -44,6 +53,11 @@ public class AdminController {
             response.put("message", "Error: Something went wrong. Please try again.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    @GetMapping("/fees/status")
+    public ResponseEntity<?> getFeesStatus(@RequestParam Long studentId) {
+        return ResponseEntity.ok(financeService.getFeesStatus(studentId));
     }
 
     @GetMapping("/studentlist")
