@@ -10,6 +10,12 @@ import java.util.Optional;
 
 @Repository
 public interface StudentRepository extends JpaRepository<Student,Long> {
+    long countBySchoolId(Long schoolId);
+    long countBySchoolIdAndClassIdAndSection(
+            Long schoolId,
+            Long classId,
+            String section
+    );
 
     @Query("""
         SELECT s FROM Student s

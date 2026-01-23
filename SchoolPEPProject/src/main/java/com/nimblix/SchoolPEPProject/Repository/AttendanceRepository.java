@@ -1,26 +1,28 @@
 package com.nimblix.SchoolPEPProject.Repository;
 
 import com.nimblix.SchoolPEPProject.Model.Attendance;
+import com.nimblix.SchoolPEPProject.Model.AttendanceStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface AttendanceRepository extends JpaRepository<Attendance,Long> {
     boolean existsBySchoolIdAndStudentIdAndAttendanceDate(
             Long schoolId,
             Long studentId,
-            String attendanceDate
+            LocalDate attendanceDate
     );
-    long countBySchoolIdAndAttendanceDate(Long schoolId, String attendanceDate);
+    long countBySchoolIdAndAttendanceDate(Long schoolId, LocalDate attendanceDate);
 
     long countBySchoolIdAndAttendanceDateAndAttendanceStatus(
             Long schoolId,
-            String attendanceDate,
-            String attendanceStatus
+            LocalDate attendanceDate,
+            AttendanceStatus attendanceStatus
     );
     @Query("SELECT a.attendanceDate, " +
             "SUM(CASE WHEN a.attendanceStatus='PRESENT' THEN 1 ELSE 0 END), " +
@@ -28,9 +30,11 @@ public interface AttendanceRepository extends JpaRepository<Attendance,Long> {
             "FROM Attendance a " +
             "WHERE a.schoolId = :schoolId AND a.attendanceDate BETWEEN :fromDate AND :toDate " +
             "GROUP BY a.attendanceDate")
-    List<Object[]> getAttendanceTrend(@Param("schoolId") Long schoolId,
-                                      @Param("fromDate") String fromDate,
-                                      @Param("toDate") String toDate);
+    List<Object[]> getAttendanceTrend(
+            @Param("schoolId") Long schoolId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
     @Query("""
         SELECT a.classId,
                a.section,
@@ -42,9 +46,16 @@ public interface AttendanceRepository extends JpaRepository<Attendance,Long> {
           AND a.attendanceDate = :date
         GROUP BY a.classId, a.section
     """)
+
+
+
     Page<Object[]> getClassWiseAttendance(
             @Param("schoolId") Long schoolId,
-            @Param("date") String date,
+            @Param("date") LocalDate date,
             Pageable pageable
     );
+
+
+
+
 }
