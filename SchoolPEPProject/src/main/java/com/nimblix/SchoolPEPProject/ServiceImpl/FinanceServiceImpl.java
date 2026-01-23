@@ -1,6 +1,7 @@
 package com.nimblix.SchoolPEPProject.ServiceImpl;
 
 import com.nimblix.SchoolPEPProject.Repository.FeesPaymentRepository;
+import com.nimblix.SchoolPEPProject.Request.FeesPaymentRequest;
 import com.nimblix.SchoolPEPProject.Service.FinanceService;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,18 @@ public class FinanceServiceImpl implements FinanceService {
 
     public FinanceServiceImpl(FeesPaymentRepository feesPaymentRepository) {
         this.feesPaymentRepository = feesPaymentRepository;
+    }
+
+    @Override
+    public Object payFees(FeesPaymentRequest request) {
+        // TODO: implement actual payment logic
+        return "Fees payment successful";
+    }
+
+    @Override
+    public Object getFeesStatus(Long studentId) {
+        // TODO: implement actual status logic
+        return "PAID";
     }
 
     @Override
@@ -25,4 +38,3 @@ public class FinanceServiceImpl implements FinanceService {
         return feesPaymentRepository.getTotalPaidAmount(schoolId);
     }
 }
-
