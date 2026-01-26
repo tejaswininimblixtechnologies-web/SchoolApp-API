@@ -11,30 +11,36 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface AttendanceRepository extends JpaRepository<Attendance,Long> {
+public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
+
     boolean existsBySchoolIdAndStudentIdAndAttendanceDate(
             Long schoolId,
             Long studentId,
             LocalDate attendanceDate
     );
-    long countBySchoolIdAndAttendanceDate(Long schoolId, LocalDate attendanceDate);
 
     long countBySchoolIdAndAttendanceDateAndAttendanceStatus(
             Long schoolId,
             LocalDate attendanceDate,
             AttendanceStatus attendanceStatus
     );
-    @Query("SELECT a.attendanceDate, " +
-            "SUM(CASE WHEN a.attendanceStatus='PRESENT' THEN 1 ELSE 0 END), " +
-            "COUNT(a) " +
-            "FROM Attendance a " +
-            "WHERE a.schoolId = :schoolId AND a.attendanceDate BETWEEN :fromDate AND :toDate " +
-            "GROUP BY a.attendanceDate")
+
+    @Query("""
+        SELECT a.attendanceDate,
+               SUM(CASE WHEN a.attendanceStatus = 'PRESENT' THEN 1 ELSE 0 END),
+               COUNT(a)
+        FROM Attendance a
+        WHERE a.schoolId = :schoolId
+          AND a.attendanceDate BETWEEN :fromDate AND :toDate
+        GROUP BY a.attendanceDate
+        ORDER BY a.attendanceDate
+    """)
     List<Object[]> getAttendanceTrend(
             @Param("schoolId") Long schoolId,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate
     );
+
     @Query("""
         SELECT a.classId,
                a.section,
@@ -46,16 +52,9 @@ public interface AttendanceRepository extends JpaRepository<Attendance,Long> {
           AND a.attendanceDate = :date
         GROUP BY a.classId, a.section
     """)
-
-
-
     Page<Object[]> getClassWiseAttendance(
             @Param("schoolId") Long schoolId,
             @Param("date") LocalDate date,
             Pageable pageable
     );
-
-
-
-
 }
