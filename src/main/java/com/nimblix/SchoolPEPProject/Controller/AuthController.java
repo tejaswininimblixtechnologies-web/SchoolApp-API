@@ -105,6 +105,7 @@ public class AuthController {
         }
     }
 
+    //Admin logout api
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
 
@@ -123,7 +124,7 @@ public class AuthController {
                 });
 
         return ResponseEntity.ok(
-                Map.of("message", "Logged out successfully")
+                Map.of("message", "Admin Logged out successfully")
         );
     }
 }

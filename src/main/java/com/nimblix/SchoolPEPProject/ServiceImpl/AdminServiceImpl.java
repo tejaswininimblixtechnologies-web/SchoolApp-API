@@ -112,6 +112,7 @@ public class AdminServiceImpl implements AdminService {
         );
     }
 
+    // Fetches profile details of the currently logged-in admin only
     @Override
     public AdminProfileResponse getLoggedInAdminProfile() {
 
@@ -141,6 +142,12 @@ public class AdminServiceImpl implements AdminService {
         return response;
     }
 
+    /**
+     * Updates profile details of the currently logged-in admin.
+     * Supports partial updates.
+     * Email field is intentionally not updatable.
+     * Mobile number must be 10 digits.
+     */
     @Override
     public void updateLoggedInAdminProfile(AdminProfileUpdateRequest request) {
 
@@ -171,6 +178,16 @@ public class AdminServiceImpl implements AdminService {
         adminRepository.save(admin);
     }
 
+    /**
+     * Soft Delete Admin Profile
+     *
+     * Deactivates the logged-in admin account.
+     * - Sets status to DELETED
+     * - Invalidates active login session
+     * - Hard delete is NOT performed
+     *
+     * This ensures audit safety and prevents future login.
+     */
     @Override
     public void softDeleteLoggedInAdmin() {
 

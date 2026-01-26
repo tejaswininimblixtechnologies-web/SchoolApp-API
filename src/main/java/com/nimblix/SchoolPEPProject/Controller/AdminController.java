@@ -80,12 +80,16 @@ public class AdminController {
         }
     }
 
-
+    //ADMIN PROFILE MANAGEMENT APIs
     @GetMapping("/profile")
     public ResponseEntity<AdminProfileResponse> getAdminProfile() {
         return ResponseEntity.ok(adminService.getLoggedInAdminProfile());
     }
 
+    // UPDATE ADMIN PROFILE API
+    // Allows logged-in admin to update profile details.
+    // Editable fields: firstName, lastName, mobile, profilePicture
+    // Email update is NOT allowed.
     @PutMapping("/profile")
     public ResponseEntity<?> updateAdminProfile(
             @RequestBody AdminProfileUpdateRequest request
@@ -96,11 +100,17 @@ public class AdminController {
         );
     }
 
+    /**
+     *Delete (Soft Delete) Admin Profile
+     *
+     * Deactivates admin account instead of hard deletion.
+     * Account status is set to DELETED.
+     */
     @DeleteMapping("/profile")
     public ResponseEntity<?> deleteAdminProfile() {
         adminService.softDeleteLoggedInAdmin();
         return ResponseEntity.ok(
-                Map.of("message", "Admin account deactivated")
+                Map.of("message", "Admin profile deactivated successfully")
         );
     }
 

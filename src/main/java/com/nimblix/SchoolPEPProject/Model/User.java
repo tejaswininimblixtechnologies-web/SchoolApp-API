@@ -35,6 +35,11 @@ public class User {
     @Column(name = "is_login")
     private Boolean isLogin;
 
+    /**
+     * Indicates whether the user has any unread notifications.
+     * Used to control notification bell indicator in UI.
+     * Default value is FALSE.
+     */
     @Column(name = "has_new_notification")
     private Boolean hasNewNotification = false;
 
