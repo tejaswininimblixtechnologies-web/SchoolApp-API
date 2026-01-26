@@ -11,9 +11,12 @@ import com.nimblix.SchoolPEPProject.Repository.StudentRepository;
 import com.nimblix.SchoolPEPProject.Request.AdminAccountCreateRequest;
 import com.nimblix.SchoolPEPProject.Response.AdminProfileResponse;
 import com.nimblix.SchoolPEPProject.Service.AdminService;
+import com.nimblix.SchoolPEPProject.Request.AdminProfileUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 
@@ -110,12 +113,20 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public AdminProfileResponse getAdminProfile(Long adminId, Long schoolId) {
+    public AdminProfileResponse getLoggedInAdminProfile() {
 
-        Admin admin = adminRepository.findByIdAndSchoolId(adminId, schoolId);
+        UserDetails userDetails =
+                (UserDetails) SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+
+        String email = userDetails.getUsername();
+
+        Admin admin = adminRepository.findByEmailId(email)
+                .orElseThrow(() ->
+                        new RuntimeException("Admin not found"));
 
         AdminProfileResponse response = new AdminProfileResponse();
-
         response.setAdminId(admin.getId());
         response.setUserId(admin.getId());
         response.setFirstName(admin.getFirstName());
@@ -128,6 +139,53 @@ public class AdminServiceImpl implements AdminService {
         response.setSchoolId(admin.getSchoolId());
 
         return response;
+    }
+
+    @Override
+    public void updateLoggedInAdminProfile(AdminProfileUpdateRequest request) {
+
+        UserDetails userDetails =
+                (UserDetails) SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+
+        Admin admin = adminRepository.findByEmailId(userDetails.getUsername())
+                .orElseThrow(() ->
+                        new RuntimeException("Admin not found"));
+
+        if (request.getFirstName() != null)
+            admin.setFirstName(request.getFirstName());
+
+        if (request.getLastName() != null)
+            admin.setLastName(request.getLastName());
+
+        if (request.getMobile() != null) {
+            if (!request.getMobile().matches("\\d{10}"))
+                throw new IllegalArgumentException("Invalid mobile number");
+            admin.setMobile(request.getMobile());
+        }
+
+        if (request.getProfilePicture() != null)
+            admin.setProfilePicture(request.getProfilePicture());
+
+        adminRepository.save(admin);
+    }
+
+    @Override
+    public void softDeleteLoggedInAdmin() {
+
+        UserDetails userDetails =
+                (UserDetails) SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+
+        Admin admin = adminRepository.findByEmailId(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        admin.setStatus(SchoolConstants.DELETED);
+        admin.setIsLogin(false);
+
+        adminRepository.save(admin);
     }
 }
 

@@ -5,6 +5,25 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Admin entity extending base User entity.
+ *
+ * Inherits common profile fields from User:
+ * - firstName, lastName
+ * - emailId (unique)
+ * - mobile
+ * - profilePicture
+ * - status (ACTIVE / DELETED)
+ * - createdTime, updatedTime
+ * - hasNewNotification (notification bell indicator)
+ *
+ * Business-specific field:
+ * - adminId (unique identifier for Admin)
+ *
+ * Soft delete is supported via:
+ * status = DELETED
+ */
+
 @Entity
 @Table(name = "admins")
 @Getter

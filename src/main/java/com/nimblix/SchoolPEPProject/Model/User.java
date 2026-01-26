@@ -35,6 +35,9 @@ public class User {
     @Column(name = "is_login")
     private Boolean isLogin;
 
+    @Column(name = "has_new_notification")
+    private Boolean hasNewNotification = false;
+
     /** MAIN CATEGORY */
     @Enumerated(EnumType.STRING)
     @Column(name = "staff_type")
