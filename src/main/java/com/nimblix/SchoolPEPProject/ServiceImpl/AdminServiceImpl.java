@@ -182,7 +182,7 @@ public class AdminServiceImpl implements AdminService {
      * Soft Delete Admin Profile
      *
      * Deactivates the logged-in admin account.
-     * - Sets status to DELETED
+     * - Sets status to IN_ACTIVE
      * - Invalidates active login session
      * - Hard delete is NOT performed
      *
@@ -199,7 +199,7 @@ public class AdminServiceImpl implements AdminService {
         Admin admin = adminRepository.findByEmailId(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-        admin.setStatus(SchoolConstants.DELETED);
+        admin.setStatus(SchoolConstants.IN_ACTIVE);
         admin.setIsLogin(false);
 
         adminRepository.save(admin);
