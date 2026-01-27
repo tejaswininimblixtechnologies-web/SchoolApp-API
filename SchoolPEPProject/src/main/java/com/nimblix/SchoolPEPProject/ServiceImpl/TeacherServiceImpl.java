@@ -12,6 +12,8 @@ import com.nimblix.SchoolPEPProject.Request.OnboardSubjectRequest;
 import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
 import com.nimblix.SchoolPEPProject.Response.MultipleImageResponse;
 import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
+import com.nimblix.SchoolPEPProject.Response.TeacherProfileResponse;
+import com.nimblix.SchoolPEPProject.Response.TeacherAssignedClassesResponse;
 import com.nimblix.SchoolPEPProject.Service.TeacherService;
 import com.nimblix.SchoolPEPProject.Util.UserIdGeneratorUtil;
 import com.nimblix.SchoolPEPProject.Enum.UserType;
@@ -20,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -477,6 +481,75 @@ public class TeacherServiceImpl implements TeacherService {
                 SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS,
                 SchoolConstants.MESSAGE, "Assignment deleted successfully"
         );
+    }
+
+    @Override
+    public TeacherProfileResponse getLoggedInTeacherDetails() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        Teacher teacher = teacherRepository.findByEmailIdForProfile(email)
+                .orElseThrow(() -> new UserNotFoundException("Teacher not found"));
+
+        return TeacherProfileResponse.builder()
+                .id(teacher.getId())
+                .teacherId(teacher.getTeacherId())
+                .firstName(teacher.getFirstName())
+                .lastName(teacher.getLastName())
+                .emailId(teacher.getEmailId())
+                .mobile(teacher.getMobile())
+                .prefix(teacher.getPrefix())
+                .designation(teacher.getDesignation())
+                .gender(teacher.getGender())
+                .status(teacher.getStatus())
+                .address(teacher.getAddress())
+                .profilePicture(teacher.getProfilePicture())
+                .staffType(teacher.getStaffType() != null ? teacher.getStaffType().name() : null)
+                .build();
+    }
+
+    @Override
+    public TeacherAssignedClassesResponse getTeacherAssignedClassesAndSubjects() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        Teacher teacher = teacherRepository.findByEmailIdForProfile(email)
+                .orElseThrow(() -> new UserNotFoundException("Teacher not found"));
+
+        List<Long> classRoomIds = subjectRepository.findDistinctClassRoomIdsByTeacherId(teacher.getId());
+        List<Classroom> classrooms = classroomRepository.findByIdIn(classRoomIds);
+
+        List<TeacherAssignedClassesResponse.AssignedClass> assignedClasses = classrooms.stream()
+                .map(classroom -> {
+                    List<Subjects> subjects = subjectRepository.findByTeacherId(teacher.getId())
+                            .stream()
+                            .filter(subject -> subject.getClassRoomId().equals(classroom.getId()))
+                            .toList();
+
+                    List<TeacherAssignedClassesResponse.AssignedSubject> assignedSubjects = subjects.stream()
+                            .map(subject -> TeacherAssignedClassesResponse.AssignedSubject.builder()
+                                    .subjectId(subject.getId())
+                                    .subjectName(subject.getSubjectName())
+                                    .subjectCode(subject.getCode())
+                                    .subDescription(subject.getSubDescription())
+                                    .totalMarks(subject.getTotalMarks())
+                                    .build())
+                            .toList();
+
+                    return TeacherAssignedClassesResponse.AssignedClass.builder()
+                            .classRoomId(classroom.getId())
+                            .className(classroom.getClassroomName())
+                            .subjects(assignedSubjects)
+                            .build();
+                })
+                .toList();
+
+        return TeacherAssignedClassesResponse.builder()
+                .id(teacher.getId())
+                .teacherId(teacher.getTeacherId())
+                .teacherName(teacher.getFirstName() + " " + teacher.getLastName())
+                .assignedClasses(assignedClasses)
+                .build();
     }
 
 }

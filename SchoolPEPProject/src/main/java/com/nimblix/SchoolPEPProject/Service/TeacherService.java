@@ -6,6 +6,8 @@ import com.nimblix.SchoolPEPProject.Request.CreateAssignmentRequest;
 import com.nimblix.SchoolPEPProject.Request.OnboardSubjectRequest;
 import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
 import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
+import com.nimblix.SchoolPEPProject.Response.TeacherProfileResponse;
+import com.nimblix.SchoolPEPProject.Response.TeacherAssignedClassesResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,5 +35,9 @@ public interface TeacherService {
     Map<String, String> updateOnboardSubject(OnboardSubjectRequest request);
 
     Map<String, String> deleteAssignment(Long assignmentId, Long subjectId);
+
+    TeacherProfileResponse getLoggedInTeacherDetails();
+
+    TeacherAssignedClassesResponse getTeacherAssignedClassesAndSubjects();
 
 }

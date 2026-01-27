@@ -8,6 +8,8 @@ import com.nimblix.SchoolPEPProject.Request.CreateAssignmentRequest;
 import com.nimblix.SchoolPEPProject.Request.OnboardSubjectRequest;
 import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
 import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
+import com.nimblix.SchoolPEPProject.Response.TeacherProfileResponse;
+import com.nimblix.SchoolPEPProject.Response.TeacherAssignedClassesResponse;
 import com.nimblix.SchoolPEPProject.Service.TeacherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -15,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -171,6 +174,39 @@ public class TeacherController {
         return ResponseEntity.ok(
                 teacherService.deleteAssignment(assignmentId, subjectId)
         );
+    }
+
+    @PostMapping("/test")
+    public ResponseEntity<String> testEndpoint() {
+        return ResponseEntity.ok("Teacher API is working!");
+    }
+
+    @PostMapping("/create-designation")
+    public ResponseEntity<Map<String, String>> createDesignation() {
+        Map<String, String> response = new HashMap<>();
+        try {
+            // This is just for testing - create a basic teacher designation
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Use database setup script or create designation manually"
+            ));
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "Failed to create designation: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<TeacherProfileResponse> getLoggedInTeacherDetails() {
+        TeacherProfileResponse response = teacherService.getLoggedInTeacherDetails();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/assigned-classes-subjects")
+    public ResponseEntity<TeacherAssignedClassesResponse> getTeacherAssignedClassesAndSubjects() {
+        TeacherAssignedClassesResponse response = teacherService.getTeacherAssignedClassesAndSubjects();
+        return ResponseEntity.ok(response);
     }
 
 }

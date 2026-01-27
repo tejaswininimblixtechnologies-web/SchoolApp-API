@@ -16,4 +16,7 @@ public interface TeacherRepository extends JpaRepository<Teacher,Long> {
                                        @Param("schoolId") Long schoolId);
 
     Optional<Teacher> findByEmailId(String email);
+
+    @Query("SELECT t FROM Teacher t WHERE t.emailId = :emailId")
+    Optional<Teacher> findByEmailIdForProfile(@Param("emailId") String emailId);
 }

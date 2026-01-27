@@ -1,9 +1,14 @@
 package com.nimblix.SchoolPEPProject.Controller;
 
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
+import com.nimblix.SchoolPEPProject.Model.Designation;
+import com.nimblix.SchoolPEPProject.Model.Role;
 import com.nimblix.SchoolPEPProject.Model.Student;
+import com.nimblix.SchoolPEPProject.Enum.StaffType;
 import com.nimblix.SchoolPEPProject.Request.AdminAccountCreateRequest;
 import com.nimblix.SchoolPEPProject.Response.AdminProfileResponse;
+import com.nimblix.SchoolPEPProject.Repository.DesignationRepository;
+import com.nimblix.SchoolPEPProject.Repository.RoleRepository;
 import com.nimblix.SchoolPEPProject.Service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +25,8 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final DesignationRepository designationRepository;
+    private final RoleRepository roleRepository;
 
     @PostMapping("/adminlogin")
     public ResponseEntity<String> submitEmail(@RequestBody String email) {
@@ -88,7 +95,44 @@ public class AdminController {
         return adminService.getAdminProfile(adminId, schoolId);
     }
 
+    @PostMapping("/create-designation")
+    public ResponseEntity<Map<String, String>> createDesignation(@RequestParam String designationName) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            Designation designation = new Designation();
+            designation.setDesignationName(designationName);
+            designation.setStaffType(StaffType.TEACHING);
+            designationRepository.save(designation);
+            
+            response.put("status", "success");
+            response.put("message", "Designation created successfully: " + designationName);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "Failed to create designation: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
+
+    @PostMapping("/create-role")
+    public ResponseEntity<Map<String, String>> createRole(@RequestParam String roleName) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            Role role = new Role();
+            role.setRoleName(roleName);
+            roleRepository.save(role);
+            
+            response.put("status", "success");
+            response.put("message", "Role created successfully: " + roleName);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "Failed to create role: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+}
 
 
 
