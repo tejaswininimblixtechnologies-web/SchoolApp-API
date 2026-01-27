@@ -46,8 +46,17 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/**",
                                 "/school/**",
-                                "/teacher/**"
+                                "/teacher/**",
+                                "/student/register",
+                                "/student/details",
+                                "/admin/timetable/**",
+                                "/admin/fix-student-status",
+                                "/admin/check-students",
+                                "/admin/create-test-student"
                         ).permitAll()
+                        .requestMatchers(
+                                "/student/**"
+                        ).hasRole("STUDENT")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
