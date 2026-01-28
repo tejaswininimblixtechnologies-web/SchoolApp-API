@@ -11,15 +11,36 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
         </processorPath>
-        <module name="SchoolPEPProject (1)" />
         <module name="SchoolPEPProject" />
       </profile>
+      <profile name="Annotation profile for SchoolPEPProject (1)" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
+        </processorPath>
+        <module name="SchoolPEPProject (1)" />
+      </profile>
+      <profile name="Annotation profile for SchoolPEPProject (2)" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
+        </processorPath>
+        <module name="SchoolPEPProject (2)" />
+      </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="SchoolPEPProject" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="SchoolPEPProject" options="-parameters" />
       <module name="SchoolPEPProject (1)" options="-parameters" />
+      <module name="SchoolPEPProject (2)" options="-parameters" />
     </option>
   </component>
 </project>
