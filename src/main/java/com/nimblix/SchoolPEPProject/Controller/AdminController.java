@@ -5,6 +5,7 @@ import com.nimblix.SchoolPEPProject.Model.Student;
 import com.nimblix.SchoolPEPProject.Request.AdminAccountCreateRequest;
 import com.nimblix.SchoolPEPProject.Response.AdminProfileResponse;
 import com.nimblix.SchoolPEPProject.Service.AdminService;
+import com.nimblix.SchoolPEPProject.Request.AdminProfileUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -79,13 +80,38 @@ public class AdminController {
         }
     }
 
-
+    //ADMIN PROFILE MANAGEMENT APIs
     @GetMapping("/profile")
-    public AdminProfileResponse getAdminProfile(
-            @RequestParam Long adminId,
-            @RequestParam Long schoolId
+    public ResponseEntity<AdminProfileResponse> getAdminProfile() {
+        return ResponseEntity.ok(adminService.getLoggedInAdminProfile());
+    }
+
+    // UPDATE ADMIN PROFILE API
+    // Allows logged-in admin to update profile details.
+    // Editable fields: firstName, lastName, mobile, profilePicture
+    // Email update is NOT allowed.
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateAdminProfile(
+            @RequestBody AdminProfileUpdateRequest request
     ) {
-        return adminService.getAdminProfile(adminId, schoolId);
+        adminService.updateLoggedInAdminProfile(request);
+        return ResponseEntity.ok(
+                Map.of("message", "Profile updated successfully")
+        );
+    }
+
+    /**
+     *Delete (Soft Delete) Admin Profile
+     *
+     * Deactivates admin account instead of hard deletion.
+     * Account status is set to DELETED.
+     */
+    @DeleteMapping("/profile")
+    public ResponseEntity<?> deleteAdminProfile() {
+        adminService.softDeleteLoggedInAdmin();
+        return ResponseEntity.ok(
+                Map.of("message", "Admin profile deactivated successfully")
+        );
     }
 
     }

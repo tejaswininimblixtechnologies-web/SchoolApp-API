@@ -37,4 +37,5 @@ public class SchoolConstants {
     public static final String PRESENT = "PRESENT";
     public static final String ABSENT = "ABSENT";
     public static final String TARDY = "TARDY";
+    public static final String DELETED = "DELETED";
 }

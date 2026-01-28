@@ -12,6 +12,7 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.Map;
 
 
@@ -104,5 +105,26 @@ public class AuthController {
         }
     }
 
+    //Admin logout api
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
 
+        UserDetails userDetails =
+                (UserDetails) SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+
+        String email = userDetails.getUsername();
+
+        adminRepository.findByEmailId(email)
+                .ifPresent(admin -> {
+                    admin.setIsLogin(false);
+                    adminRepository.save(admin);
+                });
+
+        return ResponseEntity.ok(
+                Map.of("message", "Admin Logged out successfully")
+        );
+    }
 }
