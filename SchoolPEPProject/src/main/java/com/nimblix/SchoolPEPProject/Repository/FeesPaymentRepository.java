@@ -1,27 +1,26 @@
 package com.nimblix.SchoolPEPProject.Repository;
 
 import com.nimblix.SchoolPEPProject.Model.FeesPayment;
-import org.springframework.data.jpa.repository.*;
+import com.nimblix.SchoolPEPProject.Enum.PaymentStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
-@Repository
 public interface FeesPaymentRepository extends JpaRepository<FeesPayment, Long> {
 
+    @Query("""
+        SELECT COALESCE(SUM(fp.amount), 0)
+        FROM FeesPayment fp
+        WHERE fp.school.id = :schoolId
+    """)
+    Double getTotalAssignedFees(@Param("schoolId") Long schoolId);
 
     @Query("""
-        SELECT COALESCE(SUM(f.amount), 0)
-        FROM FeesPayment f
-        WHERE f.school.id = :schoolId
+        SELECT COALESCE(SUM(fp.amount), 0)
+        FROM FeesPayment fp
+        WHERE fp.school.id = :schoolId
+        AND fp.status = :status
     """)
-    Double getTotalAssignedAmount(@Param("schoolId") Long schoolId);
-
-
-    @Query("""
-        SELECT COALESCE(SUM(f.amount), 0)
-        FROM FeesPayment f
-        WHERE f.school.id = :schoolId
-        AND f.status = 'PAID'
-    """)
-    Double getTotalPaidAmount(@Param("schoolId") Long schoolId);
+    Double getTotalPaidFees(@Param("schoolId") Long schoolId,
+                            @Param("status") PaymentStatus status);
 }

@@ -1,5 +1,6 @@
 package com.nimblix.SchoolPEPProject.Model;
 
+import com.nimblix.SchoolPEPProject.Enum.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,17 +10,21 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "fees_payment")
 public class FeesPayment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id", nullable = false)
     private School school;
 
+    @Column(nullable = false)
     private Double amount;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus status;
 }
