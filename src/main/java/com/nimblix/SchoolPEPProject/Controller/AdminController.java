@@ -114,7 +114,86 @@ public class AdminController {
         );
     }
 
+    @GetMapping("/attendance/analytics")
+    public ResponseEntity<?> getAttendanceAnalytics(
+            @RequestParam Long schoolId,
+            @RequestParam String month,
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) String section) {
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Attendance analytics fetched successfully",
+                "data", adminService.getAttendanceTrendAnalytics(schoolId, month, classId, section)
+        ));
     }
+
+    @GetMapping("/attendance/summary")
+    public ResponseEntity<?> getAttendanceSummary(
+            @RequestParam Long schoolId,
+            @RequestParam String month,
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) String section) {
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Attendance summary fetched successfully",
+                "data", adminService.getAttendanceSummaryAnalytics(schoolId, month, classId, section)
+        ));
+    }
+
+    @GetMapping("/academic-performance/trend")
+    public ResponseEntity<?> getAcademicTrend(
+            @RequestParam Long schoolId,
+            @RequestParam String month,
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) String section) {
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Academic performance trend fetched successfully",
+                "data", adminService.getAcademicPerformanceTrend(schoolId, month, classId, section)
+        ));
+    }
+
+    @GetMapping("/fee/trend")
+    public ResponseEntity<?> getFeeTrend(
+            @RequestParam Long schoolId,
+            @RequestParam String month,
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) String section) {
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Fee collection trend fetched successfully",
+                "data", adminService.getFeeCollectionTrend(schoolId, month, classId, section)
+        ));
+    }
+
+    @GetMapping("/fee/summary")
+    public ResponseEntity<?> getFeeSummary(
+            @RequestParam Long schoolId,
+            @RequestParam String month,
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) String section) {
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Fee collection summary fetched successfully",
+                "data", adminService.getFeeCollectionSummary(schoolId, month, classId, section)
+        ));
+    }
+
+    @GetMapping("/fee/analytics")
+    public ResponseEntity<?> getFeeAnalytics(
+            @RequestParam Long schoolId,
+            @RequestParam String month,
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) String section) {
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Fee analytics fetched successfully",
+                "trend", adminService.getFeeCollectionTrend(schoolId, month, classId, section),
+                "summary", adminService.getFeeCollectionSummary(schoolId, month, classId, section)
+        ));
+    }
+
+}
 
 
 
