@@ -20,6 +20,10 @@ import java.util.stream.Collectors;
 
 import com.nimblix.SchoolPEPProject.Model.Student;
 
+/**
+ * Implementation of AdminService.
+ * Provides methods for managing admin accounts, attendance, and student data.
+ */
 
 
 @Service
@@ -33,6 +37,7 @@ public class AdminServiceImpl implements AdminService {
     private final DesignationRepository designationRepository;
     private final AttendanceRepository attendanceRepository;
 
+    /** Marks attendance for a student if not already marked. */
     @Override
     public void markStudentAttendance(MarkAttendanceRequest request) {
         if (attendanceRepository.existsByStudentIdAndAttendanceDate(
@@ -47,6 +52,7 @@ public class AdminServiceImpl implements AdminService {
         attendanceRepository.save(attendance);
     }
 
+    /** Calculates average attendance percentage for a given school and date. */
     @Override
     public AttendanceSummaryResponse getAverageAttendance(Long schoolId, String date) {
         long totalStudents = studentRepository.countBySchoolId(schoolId);
@@ -63,18 +69,21 @@ public class AdminServiceImpl implements AdminService {
         return response;
     }
 
+
+    /** Returns total present count for a given school and date. */
     @Override
     public long getTotalPresentCount(Long schoolId, String date) {
         return attendanceRepository.countByAttendanceDateAndAttendanceStatus(
                 date, SchoolConstants.PRESENT);
     }
-
+    /** Returns total absent count for a given school and date. */
     @Override
     public long getTotalAbsentCount(Long schoolId, String date) {
         return attendanceRepository.countByAttendanceDateAndAttendanceStatus(
                 date, SchoolConstants.ABSENT);
     }
 
+    /** Retrieves attendance trend between two dates for a school. */
     @Override
     public List<AttendanceReportResponse> getAttendanceTrend(
             Long schoolId,
@@ -106,6 +115,8 @@ public class AdminServiceImpl implements AdminService {
         }
         return responseList;
     }
+
+    /** Retrieves admin profile details by adminId and schoolId. */
     @Override
     public AdminProfileResponse getAdminProfile(Long adminId, Long schoolId) {
 
@@ -125,6 +136,7 @@ public class AdminServiceImpl implements AdminService {
 
         return response;
     }
+    /** Retrieves list of students filtered by school, class, section, and status. */
     @Override
     public List<Student> getStudentList(
             Long schoolId,
@@ -139,6 +151,8 @@ public class AdminServiceImpl implements AdminService {
                 status
         );
     }
+
+    /** Validates email format and checks if already registered. */
     @Override
     public String submitEmail(String email) {
         if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
@@ -152,6 +166,7 @@ public class AdminServiceImpl implements AdminService {
         return "Email accepted. Continue to account creation.";
     }
 
+    /** Creates a new admin account with validation and role assignment. */
     @Override
     public Long createAdminAccount(AdminAccountCreateRequest request) {
 
@@ -184,7 +199,7 @@ public class AdminServiceImpl implements AdminService {
 
         return adminRepository.save(admin).getId();
     }
-
+    /** Retrieves class-wise attendance summary with pagination and sorting. */
     @Override
     public Map<String, Object> getClassWiseAttendance(Long schoolId, String date,
                                                       int page, int size,

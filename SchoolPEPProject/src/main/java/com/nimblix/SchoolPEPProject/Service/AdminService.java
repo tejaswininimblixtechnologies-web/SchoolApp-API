@@ -10,6 +10,11 @@ import com.nimblix.SchoolPEPProject.Response.AttendanceSummaryResponse;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * AdminService defines the contract for all admin-related operations
+ * such as account creation, attendance management, and student data retrieval.
+ */
+
 public interface AdminService {
 
     String submitEmail(String email);
@@ -22,7 +27,6 @@ public interface AdminService {
             String section,
             String status
     );
-
     AdminProfileResponse getAdminProfile(Long adminId, Long schoolId);
 
     void markStudentAttendance(MarkAttendanceRequest request);
@@ -43,5 +47,4 @@ public interface AdminService {
                                                int size,
                                                String sortBy,
                                                String sortDir);
-
 }

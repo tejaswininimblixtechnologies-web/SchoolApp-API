@@ -90,6 +90,9 @@ public class AdminController {
     ) {
         return adminService.getAdminProfile(adminId, schoolId);
     }
+
+    // Endpoint to mark student attendance
+
     @PostMapping("/attendance/mark")
     public ResponseEntity<?> markAttendance(
             @RequestBody MarkAttendanceRequest request
@@ -108,6 +111,7 @@ public class AdminController {
 
 
 
+    // Endpoint to get average attendance percentage
 
     @GetMapping("/attendance/average")
     public ResponseEntity<?> getAverageAttendance(
@@ -120,6 +124,8 @@ public class AdminController {
     }
 
 
+
+    // Endpoint to get total present count
 
     @GetMapping("/attendance/present/count")
     public ResponseEntity<?> getTotalPresentCount(
@@ -140,6 +146,8 @@ public class AdminController {
                     .body(Map.of("message", "Failed to fetch present count: " + e.getMessage()));
         }
     }
+    // Endpoint to get total absent count
+
     @GetMapping("/attendance/absent/count")
     public ResponseEntity<?> getTotalAbsentCount(
             @RequestParam Long schoolId,
@@ -164,6 +172,7 @@ public class AdminController {
     }
 
 
+    // Endpoint to get class-wise attendance with pagination and sorting
     @GetMapping("/attendance/class-wise")
     public ResponseEntity<?> getClassWiseAttendance(
             @RequestParam Long schoolId,

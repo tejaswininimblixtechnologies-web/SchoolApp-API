@@ -7,6 +7,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+
+
+/**
+ * Repository interface for Attendance entity.
+ * Provides methods to check, count, and analyze attendance records.
+ */
+
 @Repository
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 

@@ -6,6 +6,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
+
+/**
+ * Response DTO representing attendance statistics for a specific date.
+ * Used to return summarized attendance data in reports or dashboards.
+ */
+// Marks attendance for a student
+
 @Getter
 @Setter
 @AllArgsConstructor
