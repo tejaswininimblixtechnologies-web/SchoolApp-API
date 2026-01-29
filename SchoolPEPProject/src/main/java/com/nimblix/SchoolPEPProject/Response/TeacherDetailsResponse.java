@@ -20,4 +20,5 @@ public class TeacherDetailsResponse {
     private String designation;
     private String gender;
     private String status;
+    private String subject;
 }

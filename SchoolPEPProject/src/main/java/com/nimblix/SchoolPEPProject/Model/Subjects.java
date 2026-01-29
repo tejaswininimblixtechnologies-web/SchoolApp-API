@@ -22,6 +22,9 @@ public class Subjects {
     @Column(name = "subject_name")
     private String subjectName;
 
+    @Column(name = "school_id", nullable = false)
+    private Long schoolId;
+
     @Column(name = "subject_code")
     private String code;
 
@@ -47,7 +50,6 @@ public class Subjects {
 
     @Column(name = "updated_time")
     private String updatedTime;
-
 
     @PrePersist
     protected void onCreate(){

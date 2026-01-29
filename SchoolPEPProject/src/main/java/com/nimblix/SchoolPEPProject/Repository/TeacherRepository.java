@@ -38,15 +38,14 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long> {
     );
 
     @Query("""
-        SELECT t FROM Teacher t
+        SELECT DISTINCT t FROM Teacher t
+        JOIN t.subjects s
         WHERE t.schoolId = :schoolId
-          AND t.subjectId = :subjectId
-          AND t.status = 'ACTIVE'
+            AND s.id = :subjectId
+            AND t.status = 'ACTIVE'
     """)
-    List<Teacher> filterBySubject(
-            @Param("schoolId") Long schoolId,
-            @Param("subjectId") Long subjectId
-    );
+    List<Teacher> filterBySubject(Long schoolId, Long subjectId);
+
 
     @Query("""
         SELECT t FROM Teacher t

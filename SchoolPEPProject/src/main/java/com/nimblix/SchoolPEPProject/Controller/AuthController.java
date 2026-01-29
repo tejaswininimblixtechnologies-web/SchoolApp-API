@@ -3,17 +3,18 @@ package com.nimblix.SchoolPEPProject.Controller;
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
 import com.nimblix.SchoolPEPProject.Model.*;
 import com.nimblix.SchoolPEPProject.Repository.*;
-import com.nimblix.SchoolPEPProject.Enum.Status;
 import com.nimblix.SchoolPEPProject.Request.AuthLoginRequest;
 import com.nimblix.SchoolPEPProject.Response.AuthLoginResponse;
 import com.nimblix.SchoolPEPProject.Security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.authentication.*;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/auth")
@@ -23,100 +24,107 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
-
     private final AdminRepository adminRepository;
     private final TeacherRepository teacherRepository;
-    private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
+    private final StudentRepository studentRepository;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthLoginRequest request) {
 
-        String email = request.getEmail().toLowerCase();
-        String role = request.getRole().toUpperCase();
+        try {
 
-        Long userId;
-        String firstName;
-        String lastName;
-        String dbRole;
+            if (request.getEmail() == null || request.getEmail().isBlank())
+                return ResponseEntity.badRequest()
+                        .body(Map.of(SchoolConstants.MESSAGE, "Email is required"));
 
-        switch (role) {
+            if (request.getRole() == null || request.getRole().isBlank())
+                return ResponseEntity.badRequest()
+                        .body(Map.of(SchoolConstants.MESSAGE, "Role is required"));
 
-            case SchoolConstants.ADMIN -> {
-                Admin admin = adminRepository.findByEmailId(email)
-                        .orElseThrow(() -> new RuntimeException("Admin not found"));
+            String requestRole = request.getRole().toUpperCase();
+            User user = null;
 
-                if (!SchoolConstants.ACTIVE.equalsIgnoreCase(admin.getStatus()))
-                    throw new RuntimeException("Admin inactive");
-
-                userId = admin.getId();
-                firstName = admin.getFirstName();
-                lastName = admin.getLastName();
-                dbRole = admin.getRole().getRoleName();
+            switch (requestRole) {
+                case SchoolConstants.ADMIN ->
+                        user = adminRepository.findByEmailId(request.getEmail()).orElse(null);
+                case SchoolConstants.TEACHER ->
+                        user = teacherRepository.findByEmailId(request.getEmail()).orElse(null);
+                case SchoolConstants.STUDENT ->
+                        user = studentRepository.findByEmailId(request.getEmail()).orElse(null);
+                case SchoolConstants.PARENT ->
+                        user = parentRepository.findByEmailId(request.getEmail()).orElse(null);
             }
 
-            case SchoolConstants.TEACHER -> {
-                Teacher teacher = teacherRepository.findByEmailId(email)
-                        .orElseThrow(() -> new RuntimeException("Teacher not found"));
+            if (user == null || !SchoolConstants.ACTIVE.equalsIgnoreCase(user.getStatus()))
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of(SchoolConstants.MESSAGE, "User not found or inactive"));
 
-                if (teacher.getStatus() != Status.ACTIVE)
-                    throw new RuntimeException("Teacher inactive");
+            String dbRole = user.getRole().getRoleName().toUpperCase();
+            if (!dbRole.equals(requestRole))
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of(SchoolConstants.MESSAGE, SchoolConstants.ROLE_MISMATCH));
 
-                userId = teacher.getId();
-                firstName = teacher.getFirstName();
-                lastName = teacher.getLastName();
-                dbRole = SchoolConstants.TEACHER;
+            if (SchoolConstants.STUDENT.equals(dbRole)) {
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getEmail(),
+                                request.getPassword()
+                        )
+                );
             }
 
-            case SchoolConstants.STUDENT -> {
-                Student student = studentRepository.findByEmailId(email)
-                        .orElseThrow(() -> new RuntimeException("Student not found"));
+            String token = jwtUtil.generateToken(
+                    userDetailsService.loadUserByUsername(request.getEmail())
+            );
 
-                if (!SchoolConstants.ACTIVE.equalsIgnoreCase(student.getStatus()))
-                    throw new RuntimeException("Student inactive");
+            user.setIsLogin(true);
 
-                userId = student.getId();
-                firstName = student.getFirstName();
-                lastName = student.getLastName();
-                dbRole = student.getRole().getRoleName();
-            }
+            if (user instanceof Admin admin) adminRepository.save(admin);
+            else if (user instanceof Teacher teacher) teacherRepository.save(teacher);
+            else if (user instanceof Student student) studentRepository.save(student);
+            else if (user instanceof Parent parent) parentRepository.save(parent);
 
-            case SchoolConstants.PARENT -> {
-                Parent parent = parentRepository.findByEmailId(email)
-                        .orElseThrow(() -> new RuntimeException("Parent not found"));
+            AuthLoginResponse response = new AuthLoginResponse();
+            response.setFirstName(user.getFirstName());
+            response.setLastName(user.getLastName());
+            response.setEmail(user.getEmailId());
+            response.setRole(dbRole);
+            response.setToken(token);
 
-                if (!SchoolConstants.ACTIVE.equalsIgnoreCase(parent.getStatus()))
-                    throw new RuntimeException("Parent inactive");
+            if (user instanceof Admin admin) response.setUserId(admin.getId());
+            else if (user instanceof Teacher teacher) response.setUserId(teacher.getId());
+            else if (user instanceof Student student) response.setUserId(student.getId());
+            else if (user instanceof Parent parent) response.setUserId(parent.getId());
 
-                userId = parent.getId();
-                firstName = parent.getFirstName();
-                lastName = parent.getLastName();
-                dbRole = parent.getRole().getRoleName();
-            }
+            return ResponseEntity.ok(response);
 
-            default -> throw new RuntimeException("Invalid role");
+        } catch (BadCredentialsException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(SchoolConstants.MESSAGE, "Invalid password"));
         }
+    }
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        email,
-                        request.getPassword()
-                )
+    //Admin logout api
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+
+        UserDetails userDetails =
+                (UserDetails) SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+
+        String email = userDetails.getUsername();
+
+        adminRepository.findByEmailId(email)
+                .ifPresent(admin -> {
+                    admin.setIsLogin(false);
+                    adminRepository.save(admin);
+                });
+
+        return ResponseEntity.ok(
+                Map.of("message", "Admin Logged out successfully")
         );
-
-        String token = jwtUtil.generateToken(
-                userDetailsService.loadUserByUsername(email)
-        );
-
-        AuthLoginResponse response = new AuthLoginResponse();
-        response.setUserId(userId);
-        response.setFirstName(firstName);
-        response.setLastName(lastName);
-        response.setEmail(email);
-        response.setRole(dbRole);
-        response.setToken(token);
-
-        return ResponseEntity.ok(response);
     }
 }
-

@@ -1,19 +1,12 @@
 package com.nimblix.SchoolPEPProject.ServiceImpl;
 
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
-import com.nimblix.SchoolPEPProject.Enum.Status;
 import com.nimblix.SchoolPEPProject.Exception.UserNotFoundException;
 import com.nimblix.SchoolPEPProject.Helper.UploadImageHelper;
 import com.nimblix.SchoolPEPProject.Model.*;
 import com.nimblix.SchoolPEPProject.Repository.*;
-import com.nimblix.SchoolPEPProject.Request.ClassroomRequest;
-import com.nimblix.SchoolPEPProject.Request.CreateAssignmentRequest;
-import com.nimblix.SchoolPEPProject.Request.OnboardSubjectRequest;
-//import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
-import com.nimblix.SchoolPEPProject.Request.TeacherRequest;
-import com.nimblix.SchoolPEPProject.Response.MultipleImageResponse;
-import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
-import com.nimblix.SchoolPEPProject.Response.TeacherResponse;
+import com.nimblix.SchoolPEPProject.Request.*;
+import com.nimblix.SchoolPEPProject.Response.*;
 import com.nimblix.SchoolPEPProject.Service.TeacherService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +16,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
 @Slf4j
+@Transactional
 public class TeacherServiceImpl implements TeacherService {
 
     private final TeacherRepository teacherRepository;
@@ -50,8 +41,10 @@ public class TeacherServiceImpl implements TeacherService {
         Map<String, String> response = new HashMap<>();
 
         if (teacherRepository.existsByEmailId(request.getEmailId())) {
-            response.put(SchoolConstants.MESSAGE,
-                    "Teacher already exists with this email");
+            response.put(
+                    SchoolConstants.MESSAGE,
+                    "Teacher already exists with this email"
+            );
             return response;
         }
 
@@ -60,19 +53,20 @@ public class TeacherServiceImpl implements TeacherService {
         teacher.setLastName(request.getLastName());
         teacher.setEmailId(request.getEmailId());
         teacher.setMobile(request.getMobile());
-        teacher.setSubjectId(request.getSubjectId());
-        teacher.setSubjectName(request.getSubjectName());
-        teacher.setDesignation(request.getDesignation());
-        teacher.setSchoolId(request.getSchoolId());
         teacher.setGender(request.getGender());
-        teacher.setStatus(Status.ACTIVE);
+        teacher.setSchoolId(request.getSchoolId());
+
+        teacher.setStatus("ACTIVE");
 
         teacherRepository.save(teacher);
 
-        response.put(SchoolConstants.MESSAGE,
-                "Teacher registered successfully");
+        response.put(
+                SchoolConstants.MESSAGE,
+                "Teacher registered successfully"
+        );
         return response;
     }
+
 
     /* =========================================================
        TASK 5: Get Teacher Details
@@ -84,22 +78,30 @@ public class TeacherServiceImpl implements TeacherService {
                 .orElseThrow(() ->
                         new UserNotFoundException("Teacher not found"));
 
+        String subjectName = teacher.getSubjects().isEmpty()
+                ? ""
+                : teacher.getSubjects().get(0).getSubjectName();
+
         return TeacherDetailsResponse.builder()
                 .id(teacher.getId())
                 .firstName(teacher.getFirstName())
                 .lastName(teacher.getLastName())
                 .emailId(teacher.getEmailId())
                 .mobile(teacher.getMobile())
-                .designation(teacher.getDesignation())
+                .designation(
+                        teacher.getDesignation() != null
+                                ? teacher.getDesignation().getDesignationName()
+                                : null
+                )
                 .gender(teacher.getGender())
-//                .status(teacher.getStatus())
-                .status(teacher.getStatus().name())
+                .status(teacher.getStatus())
+                .subject(subjectName)
                 .build();
     }
 
     /* =========================================================
-       TASK 2,3,4: List / Search / Filter Teachers
-       dev-pragnya
+       TASK 2 & 3: List / Search Teachers
+       (Subject filter handled later via JOIN)
        ========================================================= */
     @Override
     public List<TeacherResponse> getTeachers(
@@ -111,29 +113,29 @@ public class TeacherServiceImpl implements TeacherService {
         List<Teacher> teachers;
 
         if (search != null && !search.isBlank()) {
-            teachers =
-                    teacherRepository.searchTeachers(schoolId, search);
-        } else if (subjectId != null) {
-            teachers =
-                    teacherRepository.filterBySubject(schoolId, subjectId);
+            teachers = teacherRepository.searchTeachers(schoolId, search);
         } else {
-            teachers =
-                    teacherRepository.findActiveTeachersBySchool(schoolId);
+            teachers = teacherRepository.findActiveTeachersBySchool(schoolId);
         }
 
         return teachers.stream().map(t -> {
+
+            String subjectName = t.getSubjects().isEmpty()
+                    ? ""
+                    : t.getSubjects().get(0).getSubjectName();
+
             TeacherResponse res = new TeacherResponse();
             res.setId(t.getId());
             res.setName(t.getFirstName() + " " + t.getLastName());
-            res.setSubject(t.getSubjectName());
+            res.setSubject(subjectName);
             res.setContact(t.getMobile() + " / " + t.getEmailId());
             return res;
+
         }).toList();
     }
 
     /* =========================================================
        TASK 6: Update Teacher
-       dev-pragnya
        ========================================================= */
     @Override
     public Map<String, String> updateTeacherDetails(
@@ -143,33 +145,34 @@ public class TeacherServiceImpl implements TeacherService {
 
         Map<String, String> response = new HashMap<>();
 
-        Optional<Teacher> teacherOptional =
-                teacherRepository.findById(teacherId);
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() ->
+                        new UserNotFoundException("Teacher not found"));
 
-        if (teacherOptional.isEmpty()) {
-            response.put(SchoolConstants.MESSAGE,
-                    "Teacher not found");
-            return response;
-        }
-
-        Teacher teacher = teacherOptional.get();
         teacher.setFirstName(request.getFirstName());
         teacher.setLastName(request.getLastName());
         teacher.setMobile(request.getMobile());
-        teacher.setSubjectId(request.getSubjectId());
-        teacher.setDesignation(request.getDesignation());
-        teacher.setStatus(request.getStatus());
+        teacher.setStatus(request.getStatus().name());
+
+        // Update subject
+        Subjects subject = subjectRepository.findById(request.getSubjectId())
+                .orElseThrow(() -> new RuntimeException("Subject not found"));
+
+        teacher.getSubjects().clear();
+        subject.setTeacher(teacher);
+        teacher.getSubjects().add(subject);
 
         teacherRepository.save(teacher);
 
-        response.put(SchoolConstants.MESSAGE,
-                "Teacher updated successfully");
+        response.put(
+                SchoolConstants.MESSAGE,
+                "Teacher updated successfully"
+        );
         return response;
     }
 
     /* =========================================================
        TASK 7: Soft Delete Teacher
-       dev-pragnya
        ========================================================= */
     @Override
     public Map<String, String> deleteTeacherDetails(
@@ -183,22 +186,25 @@ public class TeacherServiceImpl implements TeacherService {
                 teacherRepository.findByIdAndSchoolId(teacherId, schoolId);
 
         if (teacher == null) {
-            response.put(SchoolConstants.MESSAGE,
-                    "Teacher not found");
+            response.put(
+                    SchoolConstants.MESSAGE,
+                    "Teacher not found"
+            );
             return response;
         }
 
-        teacher.setStatus(Status.INACTIVE);
+        teacher.setStatus("INACTIVE");
         teacherRepository.save(teacher);
 
-        response.put(SchoolConstants.MESSAGE,
-                "Teacher deleted successfully");
+        response.put(
+                SchoolConstants.MESSAGE,
+                "Teacher deleted successfully"
+        );
         return response;
     }
 
     /* =========================================================
        TASK 8: Subject Dropdown
-       dev-pragnya
        ========================================================= */
     @Override
     public List<Map<String, Object>> getSubjectsBySchool(Long schoolId) {
@@ -216,7 +222,7 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     /* =========================================================
-       EXISTING CLASSROOM & ASSIGNMENT APIs (REQUIRED BY INTERFACE)
+       EXISTING CLASSROOM & ASSIGNMENT APIs
        ========================================================= */
 
     @Override
@@ -232,8 +238,10 @@ public class TeacherServiceImpl implements TeacherService {
         classroomRepository.save(classroom);
 
         return ResponseEntity.ok(
-                Map.of(SchoolConstants.MESSAGE,
-                        "Classroom created successfully")
+                Map.of(
+                        SchoolConstants.MESSAGE,
+                        "Classroom created successfully"
+                )
         );
     }
 

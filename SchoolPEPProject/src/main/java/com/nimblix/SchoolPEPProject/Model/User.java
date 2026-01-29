@@ -4,7 +4,10 @@ import com.nimblix.SchoolPEPProject.Enum.StaffType;
 import com.nimblix.SchoolPEPProject.Util.SchoolUtil;
 import jakarta.persistence.*;
 import lombok.*;
-@MappedSuperclass
+//@MappedSuperclass
+@Entity
+@Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -57,6 +60,10 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "created_time")
     private String createdTime;
