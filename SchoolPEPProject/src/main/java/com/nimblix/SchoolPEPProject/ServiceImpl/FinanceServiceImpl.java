@@ -25,19 +25,25 @@ public class FinanceServiceImpl implements FinanceService {
 
     @Override
     public Double getTotalFeesCollected(Long schoolId) {
+
         // will implement later
+
         return 0.0;
     }
 
     @Override
     public Object payFees(FeesPaymentRequest request) {
+
         // will implement later
+
         return null;
     }
 
     @Override
     public Object getFeesStatus(Long studentId) {
+
         // will implement later
+
         return null;
     }
 }

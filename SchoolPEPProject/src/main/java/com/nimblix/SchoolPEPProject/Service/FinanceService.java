@@ -4,7 +4,7 @@ import com.nimblix.SchoolPEPProject.Request.FeesPaymentRequest;
 
 public interface FinanceService {
 
-
+// totallfinace details
     Double getTotalPendingFees(Long schoolId);
 
 

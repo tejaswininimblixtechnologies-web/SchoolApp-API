@@ -33,13 +33,13 @@ public class AdminController {
     public ResponseEntity<?> payFees(@RequestBody FeesPaymentRequest request) {
         return ResponseEntity.ok(financeService.payFees(request));
     }
-
+// added payment status
     @GetMapping("/fees/status")
     public ResponseEntity<?> getFeesStatus(@RequestParam Long studentId) {
         return ResponseEntity.ok(financeService.getFeesStatus(studentId));
     }
 
-
+// added finace payment
     @GetMapping("/finance/fees/pending/total")
     public ResponseEntity<Double> getPendingFees(@RequestParam Long schoolId) {
         Double pendingFees = financeService.getTotalPendingFees(schoolId);

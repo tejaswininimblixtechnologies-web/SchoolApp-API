@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface FeesPaymentRepository extends JpaRepository<FeesPayment, Long> {
 
+    // feespayment (totalassingedfees)
     @Query("""
         SELECT COALESCE(SUM(fp.amount), 0)
         FROM FeesPayment fp
@@ -15,6 +16,7 @@ public interface FeesPaymentRepository extends JpaRepository<FeesPayment, Long> 
     """)
     Double getTotalAssignedFees(@Param("schoolId") Long schoolId);
 
+    // totalpaidfees
     @Query("""
         SELECT COALESCE(SUM(fp.amount), 0)
         FROM FeesPayment fp
