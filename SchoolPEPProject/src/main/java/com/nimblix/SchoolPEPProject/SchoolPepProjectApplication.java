@@ -8,9 +8,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 public class SchoolPepProjectApplication {
 
+
 	public static void main(String[] args) {
 
-        SpringApplication.run(SchoolPepProjectApplication.class, args);
+		SpringApplication.run(SchoolPepProjectApplication.class, args);
 	}
 
 }

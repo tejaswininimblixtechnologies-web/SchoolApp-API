@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,33 +20,39 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final ParentRepository parentRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username)
-            throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
         String email = username.toLowerCase();
 
-        User user =
-                adminRepository.findByEmailId(email)
-                        .filter(u -> SchoolConstants.ACTIVE.equalsIgnoreCase(u.getStatus()))
-                        .map(u -> (User) u)
-                        .or(() -> teacherRepository.findByEmailId(email)
-                                .filter(u -> SchoolConstants.ACTIVE.equalsIgnoreCase(u.getStatus()))
-                                .map(u -> (User) u))
-                        .or(() -> studentRepository.findByEmailId(email)
-                                .filter(u -> SchoolConstants.ACTIVE.equalsIgnoreCase(u.getStatus()))
-                                .map(u -> (User) u))
-                        .or(() -> parentRepository.findByEmailId(email)
-                                .filter(u -> SchoolConstants.ACTIVE.equalsIgnoreCase(u.getStatus()))
-                                .map(u -> (User) u))
-                        .orElseThrow(() ->
-                                new UsernameNotFoundException("Active user not found"));
+        Optional<User> userOptional = adminRepository.findByEmailId(email)
+                .filter(u -> SchoolConstants.ACTIVE.equalsIgnoreCase(u.getStatus()))
+                .map(u -> (User) u);
+
+        if (userOptional.isEmpty()) {
+            userOptional = teacherRepository.findByEmailId(email)
+                    .filter(u -> SchoolConstants.ACTIVE.equalsIgnoreCase(u.getStatus()))
+                    .map(u -> (User) u);
+        }
+
+        if (userOptional.isEmpty()) {
+            userOptional = studentRepository.findByEmailId(email)
+                    .filter(u -> SchoolConstants.ACTIVE.equalsIgnoreCase(u.getStatus()))
+                    .map(u -> (User) u);
+        }
+
+        if (userOptional.isEmpty()) {
+            userOptional = parentRepository.findByEmailId(email)
+                    .filter(u -> SchoolConstants.ACTIVE.equalsIgnoreCase(u.getStatus()))
+                    .map(u -> (User) u);
+        }
+
+        User user = userOptional.orElseThrow(() ->
+                new UsernameNotFoundException("Active user not found for email: " + email));
 
         return new org.springframework.security.core.userdetails.User(
                 user.getEmailId(),
                 user.getPassword(),
-                List.of(new SimpleGrantedAuthority(
-                        "ROLE_" + user.getRole().getRoleName()
-                ))
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getRoleName()))
         );
     }
 }
