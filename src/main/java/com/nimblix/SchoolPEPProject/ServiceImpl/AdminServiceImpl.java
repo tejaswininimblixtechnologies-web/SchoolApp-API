@@ -216,23 +216,19 @@ public class AdminServiceImpl implements AdminService {
     public List<Map<String, Object>> getAcademicPerformanceTrend(Long schoolId, String month, Long classId, String section) {
 
         List<Student> students = studentRepository.findByAllFilters(schoolId, classId, section, "ACTIVE");
-        if (students.isEmpty()) return new ArrayList<>();
-
+        if (students.isEmpty()) throw new IllegalArgumentException("No active students found for given filters");
         String ids = students.stream().map(s -> String.valueOf(s.getId())).collect(Collectors.joining(","));
-
         String sql = "SELECT exam_date, marks_obtained, total_marks FROM academic_results " +
                 "WHERE student_id IN (" + ids + ") AND exam_date LIKE '" + month + "%'";
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(sql);
-
+        if (results.isEmpty()) throw new IllegalArgumentException("No academic performance records found for selected month");
         Map<String, List<Map<String, Object>>> grouped =
                 results.stream().collect(Collectors.groupingBy(r -> r.get("exam_date").toString()));
 
         List<Map<String, Object>> response = new ArrayList<>();
-
         for (String date : grouped.keySet()) {
             List<Map<String, Object>> exams = grouped.get(date);
-
             double avg = exams.stream()
                     .mapToDouble(r -> ((Number) r.get("marks_obtained")).doubleValue() /
                             ((Number) r.get("total_marks")).doubleValue() * 100)
@@ -243,21 +239,19 @@ public class AdminServiceImpl implements AdminService {
             map.put("averageScore", avg);
             response.add(map);
         }
-
         return response;
     }
     @Override
     public List<Map<String, Object>> getFeeCollectionTrend(Long schoolId, String month, Long classId, String section) {
-
         List<Student> students = studentRepository.findByAllFilters(schoolId, classId, section, "ACTIVE");
-        if (students.isEmpty()) return new ArrayList<>();
-
+        if (students.isEmpty())  throw new IllegalArgumentException("No active students found for given filters");
         String ids = students.stream().map(s -> String.valueOf(s.getId())).collect(Collectors.joining(","));
-
         String sql = "SELECT payment_date, amount_paid, total_fee FROM fee_payments " +
                 "WHERE student_id IN (" + ids + ") AND payment_date LIKE '" + month + "%'";
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(sql);
+        if (results.isEmpty()) throw new IllegalArgumentException("No fee payment records found for selected month");
+
 
         Map<String, List<Map<String, Object>>> grouped =
                 results.stream().collect(Collectors.groupingBy(r -> r.get("payment_date").toString()));
@@ -266,24 +260,20 @@ public class AdminServiceImpl implements AdminService {
 
         for (String date : grouped.keySet()) {
             List<Map<String, Object>> payments = grouped.get(date);
-
             double collected = payments.stream()
                     .mapToDouble(r -> ((Number) r.get("amount_paid")).doubleValue()).sum();
-
             Map<String, Object> map = new HashMap<>();
             map.put("date", date);
             map.put("totalCollected", collected);
             response.add(map);
         }
-
         return response;
     }
 
     @Override
     public Map<String, Object> getFeeCollectionSummary(Long schoolId, String month, Long classId, String section) {
-
         List<Map<String, Object>> trend = getFeeCollectionTrend(schoolId, month, classId, section);
-
+        if (trend.isEmpty()) throw new IllegalArgumentException("No fee data available to summarize");
         double total = trend.stream()
                 .mapToDouble(t -> ((Number) t.get("totalCollected")).doubleValue())
                 .sum();
@@ -307,13 +297,7 @@ public class AdminServiceImpl implements AdminService {
 
         Map<String, Object> summary = new HashMap<>();
 
-        if (students.isEmpty()) {
-            summary.put("averageAttendancePercentage", 0);
-            summary.put("totalPresent", 0);
-            summary.put("totalAbsent", 0);
-            summary.put("workingDays", 0);
-            return summary;
-        }
+        if (students.isEmpty()) throw new IllegalArgumentException("No active students found for given filters");
 
         List<Long> studentIds = students.stream()
                 .map(Student::getId)
@@ -325,13 +309,7 @@ public class AdminServiceImpl implements AdminService {
                 .filter(a -> a.getAttendanceDate().startsWith(month))
                 .toList();
 
-        if (attendanceList.isEmpty()) {
-            summary.put("averageAttendancePercentage", 0);
-            summary.put("totalPresent", 0);
-            summary.put("totalAbsent", 0);
-            summary.put("workingDays", 0);
-            return summary;
-        }
+        if (attendanceList.isEmpty()) throw new IllegalArgumentException("No attendance data found for selected month");
 
         Map<String, List<Attendance>> grouped = attendanceList.stream()
                 .collect(Collectors.groupingBy(Attendance::getAttendanceDate));
@@ -355,33 +333,32 @@ public class AdminServiceImpl implements AdminService {
         summary.put("totalPresent", totalPresent);
         summary.put("totalAbsent", totalAbsent);
         summary.put("workingDays", workingDays);
-
         return summary;
     }
 
     @Override
     public List<Map<String, Object>> getAttendanceTrendAnalytics(
-            Long schoolId,
-            String month,
-            Long classId,
-            String section
-    ) {
+            Long schoolId, String month, Long classId, String section) {
+        if (schoolId == null)
+            throw new IllegalArgumentException("School ID is required");
 
-        List<Student> students = studentRepository.findByAllFilters(
-                schoolId, classId, section, "ACTIVE"
-        );
+        if (month == null || month.isBlank())
+            throw new IllegalArgumentException("Month is required (format: YYYY-MM)");
 
-        if (students.isEmpty()) return new ArrayList<>();
+        List<Student> students = studentRepository.findByAllFilters(schoolId, classId, section, "ACTIVE");
 
-        List<Long> studentIds = students.stream()
-                .map(Student::getId)
-                .toList();
+        if (students.isEmpty())
+            throw new IllegalArgumentException("No active students found for given filters");
 
-        List<Attendance> attendanceList = attendanceRepository.findAll()
-                .stream()
+        List<Long> studentIds = students.stream().map(Student::getId).toList();
+
+        List<Attendance> attendanceList = attendanceRepository.findAll().stream()
                 .filter(a -> studentIds.contains(a.getStudentId()))
                 .filter(a -> a.getAttendanceDate().startsWith(month))
                 .toList();
+
+        if (attendanceList.isEmpty())
+            throw new IllegalArgumentException("No attendance records found for selected month");
 
         Map<String, List<Attendance>> grouped = attendanceList.stream()
                 .collect(Collectors.groupingBy(Attendance::getAttendanceDate));
@@ -389,28 +366,20 @@ public class AdminServiceImpl implements AdminService {
         List<Map<String, Object>> response = new ArrayList<>();
 
         for (String date : grouped.keySet().stream().sorted().toList()) {
-
             List<Attendance> dayRecords = grouped.get(date);
 
             long total = dayRecords.size();
             long present = dayRecords.stream()
                     .filter(a -> "PRESENT".equalsIgnoreCase(a.getAttendanceStatus()))
                     .count();
-            long absent = total - present;
-
-            double percentage = total == 0 ? 0 : (present * 100.0) / total;
 
             Map<String, Object> map = new HashMap<>();
             map.put("date", date);
-            map.put("totalStudents", total);
-            map.put("presentCount", present);
-            map.put("absentCount", absent);
-            map.put("attendancePercentage", percentage);
-
+            map.put("attendancePercentage", (present * 100.0) / total);
             response.add(map);
         }
-
         return response;
     }
+
 }
 

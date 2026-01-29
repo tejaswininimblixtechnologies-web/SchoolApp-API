@@ -15,14 +15,9 @@ public interface AdminService {
     AdminProfileResponse getLoggedInAdminProfile();
     void updateLoggedInAdminProfile(AdminProfileUpdateRequest request);
     void softDeleteLoggedInAdmin();
-
     List<Map<String, Object>> getAttendanceTrendAnalytics(Long schoolId, String month, Long classId, String section);
-
     Map<String, Object> getAttendanceSummaryAnalytics(Long schoolId, String month, Long classId, String section);
-
     List<Map<String, Object>> getAcademicPerformanceTrend(Long schoolId, String month, Long classId, String section);
-
     List<Map<String, Object>> getFeeCollectionTrend(Long schoolId, String month, Long classId, String section);
-
     Map<String, Object> getFeeCollectionSummary(Long schoolId, String month, Long classId, String section);
 }

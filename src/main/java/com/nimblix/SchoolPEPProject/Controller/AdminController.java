@@ -192,7 +192,6 @@ public class AdminController {
                 "summary", adminService.getFeeCollectionSummary(schoolId, month, classId, section)
         ));
     }
-
 }
 
 
