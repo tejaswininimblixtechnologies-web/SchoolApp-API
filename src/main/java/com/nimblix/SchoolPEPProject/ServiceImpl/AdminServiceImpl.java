@@ -213,8 +213,6 @@ public class AdminServiceImpl implements AdminService {
     }
 
 
-    // Academic Performance Trend....
-
     @Override
     public List<Map<String, Object>> getAcademicPerformanceTrend(Long schoolId, String month, Long classId, String section) {
 
