@@ -114,7 +114,7 @@ public class AdminController {
         );
     }
 
-    // Attendance Analytics
+    // Attendance Analytics...
     @GetMapping("/attendance/analytics")
     public ResponseEntity<?> getAttendanceAnalytics(
             @RequestParam Long schoolId,
@@ -128,7 +128,7 @@ public class AdminController {
         ));
     }
 
-    // Attendance Summary
+    // Attendance Summary...
     @GetMapping("/attendance/summary")
     public ResponseEntity<?> getAttendanceSummary(
             @RequestParam Long schoolId,
@@ -142,7 +142,7 @@ public class AdminController {
         ));
     }
 
-    // Academic Performance Trend
+    // Academic Performance Trend...
     @GetMapping("/academic-performance/trend")
     public ResponseEntity<?> getAcademicTrend(
             @RequestParam Long schoolId,
@@ -156,7 +156,7 @@ public class AdminController {
         ));
     }
 
-    // Academic fee Trends
+    // Academic fee Trends...
     @GetMapping("/fee/trend")
     public ResponseEntity<?> getFeeTrend(
             @RequestParam Long schoolId,
@@ -170,7 +170,7 @@ public class AdminController {
         ));
     }
 
-    // Fee Summary
+    // Fee Summary...
     @GetMapping("/fee/summary")
     public ResponseEntity<?> getFeeSummary(
             @RequestParam Long schoolId,
@@ -184,7 +184,7 @@ public class AdminController {
         ));
     }
 
-    // Fee Analytics
+    // Fee Analytics....
     @GetMapping("/fee/analytics")
     public ResponseEntity<?> getFeeAnalytics(
             @RequestParam Long schoolId,

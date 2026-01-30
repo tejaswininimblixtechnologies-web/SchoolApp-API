@@ -213,7 +213,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
 
-    // Academic Performance Trend
+    // Academic Performance Trend....
 
     @Override
     public List<Map<String, Object>> getAcademicPerformanceTrend(Long schoolId, String month, Long classId, String section) {
@@ -245,7 +245,7 @@ public class AdminServiceImpl implements AdminService {
         return response;
     }
 
-    // Fee Collection Trend
+    // Fee Collection Trend....
     @Override
     public List<Map<String, Object>> getFeeCollectionTrend(Long schoolId, String month, Long classId, String section) {
         List<Student> students = studentRepository.findByAllFilters(schoolId, classId, section, "ACTIVE");
@@ -275,7 +275,7 @@ public class AdminServiceImpl implements AdminService {
         return response;
     }
 
-    // // Fee Summary
+    // // Fee Summary....
 
     @Override
     public Map<String, Object> getFeeCollectionSummary(Long schoolId, String month, Long classId, String section) {
@@ -290,7 +290,7 @@ public class AdminServiceImpl implements AdminService {
         map.put("daysCount", trend.size());
         return map;
     }
-    // Attendance Summary
+    // Attendance Summary....
     @Override
     public Map<String, Object> getAttendanceSummaryAnalytics(
             Long schoolId,
@@ -344,7 +344,7 @@ public class AdminServiceImpl implements AdminService {
         return summary;
     }
 
-    // Attendance Trend
+    // Attendance Trend....
     @Override
     public List<Map<String, Object>> getAttendanceTrendAnalytics(
             Long schoolId, String month, Long classId, String section) {
