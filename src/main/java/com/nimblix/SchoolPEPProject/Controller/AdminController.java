@@ -127,6 +127,7 @@ public class AdminController {
         ));
     }
 
+    // .........
     @GetMapping("/attendance/summary")
     public ResponseEntity<?> getAttendanceSummary(
             @RequestParam Long schoolId,
