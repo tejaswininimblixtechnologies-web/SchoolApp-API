@@ -33,5 +33,7 @@ public interface TeacherService {
     Map<String, String> updateOnboardSubject(OnboardSubjectRequest request);
 
     Map<String, String> deleteAssignment(Long assignmentId, Long subjectId);
+    ResponseEntity<Map<String, Object>> login(Map<String, String> request);
+    Object getStaffByType(String staffType, Long schoolId);
 
 }
