@@ -9,6 +9,7 @@ import com.nimblix.SchoolPEPProject.Model.Timetable;
 import com.nimblix.SchoolPEPProject.Model.TimetableNote;
 import com.nimblix.SchoolPEPProject.Model.Assignment;
 import com.nimblix.SchoolPEPProject.Model.AssignmentSubmission;
+import com.nimblix.SchoolPEPProject.Model.Subjects;
 import com.nimblix.SchoolPEPProject.Model.User;
 import com.nimblix.SchoolPEPProject.Repository.DesignationRepository;
 import com.nimblix.SchoolPEPProject.Repository.RoleRepository;
@@ -17,8 +18,7 @@ import com.nimblix.SchoolPEPProject.Repository.TimetableRepository;
 import com.nimblix.SchoolPEPProject.Repository.TimetableNoteRepository;
 import com.nimblix.SchoolPEPProject.Repository.AssignmentRepository;
 import com.nimblix.SchoolPEPProject.Repository.AssignmentSubmissionRepository;
-import com.nimblix.SchoolPEPProject.Repository.SubjectListRepository;
-import com.nimblix.SchoolPEPProject.Repository.StudentSubjectsRepository;
+import com.nimblix.SchoolPEPProject.Repository.SubjectRepository;
 //import com.nimblix.SchoolPEPProject.Repository.UserRepository;
 import com.nimblix.SchoolPEPProject.Request.StudentRegistrationRequest;
 import com.nimblix.SchoolPEPProject.Request.UpdateStudentProfileRequest;
@@ -62,8 +62,7 @@ public class StudentServiceImpl implements StudentService {
     private final TimetableNoteRepository timetableNoteRepository;
     private final AssignmentRepository assignmentRepository;
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
-    private final SubjectListRepository subjectListRepository;
-    private final StudentSubjectsRepository studentSubjectsRepository;
+    private final SubjectRepository subjectRepository;
 
     @Override
     public ResponseEntity<?> registerStudent(StudentRegistrationRequest request) {
@@ -211,9 +210,14 @@ public class StudentServiceImpl implements StudentService {
 
         return StudentContextResponse.builder()
                 .studentId(student.getId())
+                .firstName(student.getFirstName())
+                .lastName(student.getLastName())
+                .email(student.getEmailId())
                 .classId(student.getClassId())
                 .section(student.getSection())
                 .academicYear("2024-2025") // TODO: Get from database or configuration
+                .rollNumber(student.getRollNumber())
+                .schoolId(student.getSchoolId())
                 .build();
     }
 
@@ -669,21 +673,19 @@ public class StudentServiceImpl implements StudentService {
         Student student = studentRepository.findByEmailId(email)
                 .orElseThrow(() -> new UserNotFoundException("Student not found with email: " + email));
 
-        // Get subjects from assignments for the student's class and section
-        List<String> subjectNames = assignmentRepository.findDistinctSubjectsByClassSectionAndAcademicYear(
-                student.getClassId(),
-                student.getSection(),
-                "2024-2025" // TODO: Get from student context
-        );
+        // Get subjects from existing Subjects entity for the student's class
+        List<Subjects> subjects = subjectRepository.findByClassRoomId(student.getClassId());
 
-        // Convert to SubjectResponse
-        return subjectNames.stream()
-                .map(subjectName -> SubjectResponse.builder()
-                        .subjectId(null) // We don't have subject ID from assignment query
-                        .subjectName(subjectName)
-                        .subjectCode("") // Not available from assignment query
-                        .description("") // Not available from assignment query
-                        .status("ACTIVE") // Default status
+        // Convert to SubjectResponse using existing Subjects entity
+        return subjects.stream()
+                .map(subject -> SubjectResponse.builder()
+                        .id(subject.getId())
+                        .subjectName(subject.getSubjectName())
+                        .code(subject.getCode())
+                        .subDescription(subject.getSubDescription())
+                        .classRoomId(subject.getClassRoomId())
+                        .totalMarks(subject.getTotalMarks())
+                        .marksObtained(subject.getMarksObtained())
                         .build())
                 .toList();
     }

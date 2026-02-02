@@ -182,6 +182,29 @@ public class StudentController {
             }
         }
 
+        @GetMapping("/logged-in-details")
+        public ResponseEntity<?> getLoggedInStudentDetails() {
+            Map<String, Object> response = new HashMap<>();
+
+            try {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                String email = authentication.getName();
+
+                StudentContextResponse studentDetails = studentService.getStudentContext(email);
+
+                response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS);
+                response.put(SchoolConstants.MESSAGE, "Student details fetched successfully");
+                response.put("data", studentDetails);
+
+                return ResponseEntity.ok(response);
+
+            } catch (Exception e) {
+                response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_FAILURE);
+                response.put(SchoolConstants.MESSAGE, e.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+        }
+
         @GetMapping("/timetable/weekly")
         public ResponseEntity<?> getWeeklyTimetable() {
             Map<String, Object> response = new HashMap<>();

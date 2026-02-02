@@ -34,6 +34,10 @@ public interface StudentRepository extends JpaRepository<Student,Long> {
 
     Optional<Student> findByEmailId(String email);
 
+    List<Student> findByStatus(String status);
+
+    long countByStatus(String status);
+
     @Modifying
     @Query("UPDATE Student s SET s.status = :status WHERE s.status IS NULL OR s.status != :status")
     int fixStudentStatus(@Param("status") String status);

@@ -19,6 +19,8 @@ public class StudentDebugController {
 
     private final StudentRepository studentRepository;
 
+    // ===== DEBUG ENDPOINTS =====
+
     @GetMapping("/check-students")
     public ResponseEntity<Map<String, Object>> checkStudents() {
         Map<String, Object> response = new HashMap<>();
@@ -67,6 +69,43 @@ public class StudentDebugController {
             
             // This would need the full student creation logic
             response.put("message", "Please use /student/register to create test student");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // ===== DATA FIX ENDPOINTS (Consolidated from StudentDataFixController) =====
+
+    @PostMapping("/fix-student-status")
+    public ResponseEntity<String> fixStudentStatus() {
+        try {
+            // Update all students with null or incorrect status to ACTIVE
+            int updatedCount = studentRepository.fixStudentStatus(SchoolConstants.ACTIVE);
+            return ResponseEntity.ok("Fixed " + updatedCount + " student records");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fixing student status: " + e.getMessage());
+        }
+    }
+
+    // ===== ADDITIONAL ADMIN UTILITIES =====
+
+    @GetMapping("/student-summary")
+    public ResponseEntity<Map<String, Object>> getStudentSummary() {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            long totalStudents = studentRepository.count();
+            long activeStudents = studentRepository.countByStatus(SchoolConstants.ACTIVE);
+            long inactiveStudents = totalStudents - activeStudents;
+            
+            response.put("totalStudents", totalStudents);
+            response.put("activeStudents", activeStudents);
+            response.put("inactiveStudents", inactiveStudents);
+            response.put("message", "Student summary fetched successfully");
+            
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {

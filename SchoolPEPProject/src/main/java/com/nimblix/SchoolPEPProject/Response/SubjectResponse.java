@@ -9,9 +9,11 @@ import lombok.Setter;
 @Builder
 public class SubjectResponse {
 
-    private Long subjectId;
+    private Long id;
     private String subjectName;
-    private String subjectCode;
-    private String description;
-    private String status;
+    private String code;
+    private String subDescription;
+    private Long classRoomId;
+    private Long totalMarks;
+    private Long marksObtained;
 }

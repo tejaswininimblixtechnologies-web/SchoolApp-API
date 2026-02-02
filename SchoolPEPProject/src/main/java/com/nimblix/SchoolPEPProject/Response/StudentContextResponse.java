@@ -10,7 +10,12 @@ import lombok.Setter;
 public class StudentContextResponse {
 
     private Long studentId;
+    private String firstName;
+    private String lastName;
+    private String email;
     private Long classId;
     private String section;
     private String academicYear;
+    private String rollNumber;
+    private Long schoolId;
 }

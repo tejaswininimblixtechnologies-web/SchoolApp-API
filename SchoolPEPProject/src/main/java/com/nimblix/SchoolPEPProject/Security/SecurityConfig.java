@@ -50,9 +50,7 @@ public class SecurityConfig {
                                 "/student/register",
                                 "/student/details",
                                 "/admin/timetable/**",
-                                "/admin/fix-student-status",
-                                "/admin/check-students",
-                                "/admin/create-test-student"
+                                "/admin/**"  // All admin endpoints now in StudentDebugController
                         ).permitAll()
                         .requestMatchers(
                                 "/student/**"
