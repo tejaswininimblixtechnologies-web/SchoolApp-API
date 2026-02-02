@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.nimblix.SchoolPEPProject.Request.CalendarEventRequest;
 import com.nimblix.SchoolPEPProject.Response.CalendarEventResponse;
 import com.nimblix.SchoolPEPProject.Response.MonthlyCalendarResponse;
+import com.nimblix.SchoolPEPProject.Response.MonthlyCalendarSummaryResponse;
 import com.nimblix.SchoolPEPProject.Service.CalendarService;
+import com.nimblix.SchoolPEPProject.Service.DiaryEntryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 @RestController
@@ -22,12 +25,47 @@ import java.util.List;
 public class CalendarController {
 
     private final CalendarService calendarService;
+    private final DiaryEntryService diaryEntryService;
+
+    // ========== CALENDAR SUMMARY ENDPOINTS (Moved from DiaryEntryController) ==========
+
+    // Get Monthly Calendar Summary
+    @GetMapping("/summary")
+    public ResponseEntity<MonthlyCalendarSummaryResponse> getMonthlyCalendarSummary(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth yearMonth) {
+        log.info("Getting monthly calendar summary for: {}", yearMonth);
+        return diaryEntryService.getMonthlyCalendarSummary(yearMonth);
+    }
+
+    // Get Monthly Calendar Summary by Year and Month
+    @GetMapping("/summary/{year}/{month}")
+    public ResponseEntity<MonthlyCalendarSummaryResponse> getMonthlyCalendarSummaryByYearMonth(
+            @PathVariable Integer year,
+            @PathVariable Integer month) {
+        log.info("Getting monthly calendar summary for year: {}, month: {}", year, month);
+        YearMonth yearMonth = YearMonth.of(year, month);
+        return diaryEntryService.getMonthlyCalendarSummary(yearMonth);
+    }
+
+    // ========== EXISTING CALENDAR ENDPOINTS ==========
 
     // CRUD Operations
     @PostMapping("/events")
     public ResponseEntity<CalendarEventResponse> createEvent(@Valid @RequestBody CalendarEventRequest request) {
         log.info("Creating calendar event: {}", request.getEventTitle());
         return calendarService.createEvent(request);
+    }
+
+    @GetMapping("/events")
+    public ResponseEntity<List<CalendarEventResponse>> getTeacherEvents() {
+        log.info("Getting all calendar events");
+        return calendarService.getTeacherEvents();
+    }
+
+    @GetMapping("/events/{eventId}")
+    public ResponseEntity<CalendarEventResponse> getEventById(@PathVariable Long eventId) {
+        log.info("Getting calendar event: {}", eventId);
+        return calendarService.getEventById(eventId);
     }
 
     @PutMapping("/events/{eventId}")
@@ -44,23 +82,18 @@ public class CalendarController {
         return calendarService.deleteEvent(eventId);
     }
 
-    @GetMapping("/events/{eventId}")
-    public ResponseEntity<CalendarEventResponse> getEventById(@PathVariable Long eventId) {
-        log.info("Getting calendar event: {}", eventId);
-        return calendarService.getEventById(eventId);
-    }
-
-    // Teacher Calendar Operations
-    @GetMapping("/events")
-    public ResponseEntity<List<CalendarEventResponse>> getTeacherEvents() {
-        log.info("Getting all teacher events");
-        return calendarService.getTeacherEvents();
+    // Date-based queries
+    @GetMapping("/events/date/{eventDate}")
+    public ResponseEntity<List<CalendarEventResponse>> getEventsByDate(
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime eventDate) {
+        log.info("Getting events for date: {}", eventDate);
+        return calendarService.getTeacherEventsByDateRange(eventDate, eventDate);
     }
 
     @GetMapping("/events/range")
-    public ResponseEntity<List<CalendarEventResponse>> getTeacherEventsByDateRange(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDate) {
+    public ResponseEntity<List<CalendarEventResponse>> getEventsByDateRange(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
         log.info("Getting events from {} to {}", startDate, endDate);
         return calendarService.getTeacherEventsByDateRange(startDate, endDate);
     }
@@ -71,6 +104,7 @@ public class CalendarController {
         return calendarService.getUpcomingEvents();
     }
 
+    // Monthly Calendar
     @GetMapping("/events/monthly")
     public ResponseEntity<MonthlyCalendarResponse> getMonthlyCalendar(
             @RequestParam int year,
@@ -79,100 +113,10 @@ public class CalendarController {
         return calendarService.getMonthlyCalendar(year, month);
     }
 
-    // Event Type Operations
-    @GetMapping("/events/type/{eventType}")
-    public ResponseEntity<List<CalendarEventResponse>> getEventsByType(@PathVariable String eventType) {
-        log.info("Getting events by type: {}", eventType);
-        return calendarService.getEventsByType(eventType);
-    }
-
-    @GetMapping("/events/classroom/{classroomId}")
-    public ResponseEntity<List<CalendarEventResponse>> getEventsByClassroom(@PathVariable Long classroomId) {
-        log.info("Getting events by classroom: {}", classroomId);
-        return calendarService.getEventsByClassroom(classroomId);
-    }
-
-    // Utility Operations
-    @PostMapping("/events/{eventId}/cancel")
-    public ResponseEntity<String> cancelEvent(@PathVariable Long eventId) {
-        log.info("Cancelling calendar event: {}", eventId);
-        return calendarService.cancelEvent(eventId);
-    }
-
-    @PostMapping("/events/{eventId}/reschedule")
-    public ResponseEntity<String> rescheduleEvent(
-            @PathVariable Long eventId,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime newStartDateTime,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime newEndDateTime) {
-        log.info("Rescheduling calendar event: {} to {} - {}", eventId, newStartDateTime, newEndDateTime);
-        return calendarService.rescheduleEvent(eventId, newStartDateTime, newEndDateTime);
-    }
-
-    @GetMapping("/events/today")
-    public ResponseEntity<List<CalendarEventResponse>> getTodayEvents() {
-        log.info("Getting today's events");
-        return calendarService.getTodayEvents();
-    }
-
-    @GetMapping("/events/week")
-    public ResponseEntity<List<CalendarEventResponse>> getWeekEvents() {
-        log.info("Getting week events");
-        return calendarService.getWeekEvents();
-    }
-
-    // Quick Event Creation Endpoints
-    @PostMapping("/events/quick/class")
-    public ResponseEntity<CalendarEventResponse> createClassEvent(
-            @RequestParam String title,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startDateTime,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDateTime,
-            @RequestParam Long classroomId,
-            @RequestParam(required = false) Long subjectId) {
-        
-        CalendarEventRequest request = new CalendarEventRequest();
-        request.setEventTitle(title);
-        request.setStartDateTime(startDateTime);
-        request.setEndDateTime(endDateTime);
-        request.setClassroomId(classroomId);
-        request.setSubjectId(subjectId);
-        request.setEventType(com.nimblix.SchoolPEPProject.Enum.EventType.CLASS_SCHEDULE);
-        
-        return calendarService.createEvent(request);
-    }
-
-    @PostMapping("/events/quick/exam")
-    public ResponseEntity<CalendarEventResponse> createExamEvent(
-            @RequestParam String title,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startDateTime,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDateTime,
-            @RequestParam Long classroomId,
-            @RequestParam(required = false) Long subjectId) {
-        
-        CalendarEventRequest request = new CalendarEventRequest();
-        request.setEventTitle(title);
-        request.setStartDateTime(startDateTime);
-        request.setEndDateTime(endDateTime);
-        request.setClassroomId(classroomId);
-        request.setSubjectId(subjectId);
-        request.setEventType(com.nimblix.SchoolPEPProject.Enum.EventType.EXAM);
-        
-        return calendarService.createEvent(request);
-    }
-
-    @PostMapping("/events/quick/meeting")
-    public ResponseEntity<CalendarEventResponse> createMeetingEvent(
-            @RequestParam String title,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startDateTime,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDateTime,
-            @RequestParam(required = false) String location) {
-        
-        CalendarEventRequest request = new CalendarEventRequest();
-        request.setEventTitle(title);
-        request.setStartDateTime(startDateTime);
-        request.setEndDateTime(endDateTime);
-        request.setLocation(location);
-        request.setEventType(com.nimblix.SchoolPEPProject.Enum.EventType.MEETING);
-        
-        return calendarService.createEvent(request);
+    // Test endpoint to verify controller is working
+    @GetMapping("/test")
+    public ResponseEntity<String> testEndpoint() {
+        log.info("Calendar controller is working!");
+        return ResponseEntity.ok("Calendar API is working!");
     }
 }

@@ -1,11 +1,13 @@
 package com.nimblix.SchoolPEPProject.ServiceImpl;
 
-import com.nimblix.SchoolPEPProject.Model.DiaryEntry;
+import com.nimblix.SchoolPEPProject.Model.Notes;
 import com.nimblix.SchoolPEPProject.Model.Teacher;
-import com.nimblix.SchoolPEPProject.Repository.DiaryEntryRepository;
+import com.nimblix.SchoolPEPProject.Repository.NotesRepository;
 import com.nimblix.SchoolPEPProject.Repository.TeacherRepository;
 import com.nimblix.SchoolPEPProject.Request.DiaryEntryRequest;
 import com.nimblix.SchoolPEPProject.Response.DiaryEntryResponse;
+import com.nimblix.SchoolPEPProject.Response.CalendarDaySummaryResponse;
+import com.nimblix.SchoolPEPProject.Response.MonthlyCalendarSummaryResponse;
 import com.nimblix.SchoolPEPProject.Service.DiaryEntryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,7 +35,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class DiaryEntryServiceImpl implements DiaryEntryService {
 
-    private final DiaryEntryRepository diaryEntryRepository;
+    private final NotesRepository notesRepository;
     private final TeacherRepository teacherRepository;
 
     @Override
@@ -35,16 +43,22 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
         try {
             Teacher teacher = getAuthenticatedTeacher();
 
-            DiaryEntry diaryEntry = new DiaryEntry();
-            diaryEntry.setEntryTitle(request.getEntryTitle());
-            diaryEntry.setEntryContent(request.getEntryContent());
-            diaryEntry.setEntryDate(request.getEntryDate());
-            diaryEntry.setTeacher(teacher);
+            Notes note = new Notes();
+            note.setNoteType("DIARY");
+            note.setEntryTitle(request.getEntryTitle());
+            note.setEntryContent(request.getEntryContent());
+            note.setEntryDate(request.getEntryDate());
+            note.setTeacher(teacher);
+            
+            // Set main fields for consistency
+            note.setTitle(request.getEntryTitle());
+            note.setDescription(request.getEntryContent());
+            note.setNoteDate(request.getEntryDate().toLocalDate());
 
-            DiaryEntry savedEntry = diaryEntryRepository.save(diaryEntry);
-            log.info("Diary entry created successfully: {}", savedEntry.getId());
+            Notes savedNote = notesRepository.save(note);
+            log.info("Diary entry created successfully: {}", savedNote.getId());
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(savedEntry));
+            return ResponseEntity.status(HttpStatus.CREATED).body(mapToResponse(savedNote));
 
         } catch (Exception e) {
             log.error("Error creating diary entry: {}", e.getMessage());
@@ -55,28 +69,33 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
     @Override
     public ResponseEntity<DiaryEntryResponse> updateEntry(Long entryId, DiaryEntryRequest request) {
         try {
-            DiaryEntry diaryEntry = diaryEntryRepository.findById(entryId)
+            Notes note = notesRepository.findById(entryId)
                     .orElseThrow(() -> new RuntimeException("Diary entry not found"));
 
             Teacher teacher = getAuthenticatedTeacher();
 
             // Check if the entry belongs to the authenticated teacher
-            if (!diaryEntry.getTeacher().getId().equals(teacher.getId())) {
+            if (!note.getTeacherId().equals(teacher.getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
             // Update diary summary
-            diaryEntry.setEntryTitle(request.getEntryTitle());
-            diaryEntry.setEntryContent(request.getEntryContent());
-            diaryEntry.setEntryDate(request.getEntryDate());
+            note.setEntryTitle(request.getEntryTitle());
+            note.setEntryContent(request.getEntryContent());
+            note.setEntryDate(request.getEntryDate());
+            
+            // Update main fields for consistency
+            note.setTitle(request.getEntryTitle());
+            note.setDescription(request.getEntryContent());
+            note.setNoteDate(request.getEntryDate().toLocalDate());
             
             // Track who updated the entry
-            diaryEntry.setUpdatedBy(teacher.getId());
+            note.setUpdatedBy(teacher.getId().toString());
 
-            DiaryEntry updatedEntry = diaryEntryRepository.save(diaryEntry);
-            log.info("Diary entry updated successfully: {}", updatedEntry.getId());
+            Notes updatedNote = notesRepository.save(note);
+            log.info("Diary entry updated successfully: {}", updatedNote.getId());
 
-            return ResponseEntity.ok(mapToResponse(updatedEntry));
+            return ResponseEntity.ok(mapToResponse(updatedNote));
 
         } catch (Exception e) {
             log.error("Error updating diary entry: {}", e.getMessage());
@@ -87,21 +106,22 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
     @Override
     public ResponseEntity<String> deleteEntry(Long entryId) {
         try {
-            DiaryEntry diaryEntry = diaryEntryRepository.findById(entryId)
+            Notes note = notesRepository.findById(entryId)
                     .orElseThrow(() -> new RuntimeException("Diary entry not found"));
 
             Teacher teacher = getAuthenticatedTeacher();
 
             // Check if the entry belongs to the authenticated teacher
-            if (!diaryEntry.getTeacher().getId().equals(teacher.getId())) {
+            if (!note.getTeacherId().equals(teacher.getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
             // Soft delete - change status to DELETED instead of removing from database
-            diaryEntry.setStatus("DELETED");
-            diaryEntry.setUpdatedBy(teacher.getId());
+            note.setEntryStatus("DELETED");
+            note.setNoteStatus("DELETED");
+            note.setUpdatedBy(teacher.getId().toString());
             
-            diaryEntryRepository.save(diaryEntry);
+            notesRepository.save(note);
             log.info("Diary entry soft deleted successfully: {}", entryId);
 
             return ResponseEntity.ok("Diary entry deleted successfully");
@@ -115,17 +135,17 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
     @Override
     public ResponseEntity<DiaryEntryResponse> getEntryById(Long entryId) {
         try {
-            DiaryEntry diaryEntry = diaryEntryRepository.findById(entryId)
+            Notes note = notesRepository.findById(entryId)
                     .orElseThrow(() -> new RuntimeException("Diary entry not found"));
 
             Teacher teacher = getAuthenticatedTeacher();
 
             // Check if the entry belongs to the authenticated teacher
-            if (!diaryEntry.getTeacher().getId().equals(teacher.getId())) {
+            if (!note.getTeacherId().equals(teacher.getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
-            return ResponseEntity.ok(mapToResponse(diaryEntry));
+            return ResponseEntity.ok(mapToResponse(note));
 
         } catch (Exception e) {
             log.error("Error getting diary entry: {}", e.getMessage());
@@ -137,7 +157,7 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
     public ResponseEntity<List<DiaryEntryResponse>> getTeacherEntries() {
         try {
             Teacher teacher = getAuthenticatedTeacher();
-            List<DiaryEntry> entries = diaryEntryRepository.findByTeacherId(teacher.getId());
+            List<Notes> entries = notesRepository.findByTeacherIdAndNoteType(teacher.getId(), "DIARY");
             List<DiaryEntryResponse> responses = entries.stream()
                     .map(this::mapToResponse)
                     .collect(Collectors.toList());
@@ -148,7 +168,88 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
         }
     }
 
-    // Helper methods
+    @Override
+    public ResponseEntity<MonthlyCalendarSummaryResponse> getMonthlyCalendarSummary(YearMonth yearMonth) {
+        try {
+            Teacher teacher = getAuthenticatedTeacher();
+            log.info("Getting monthly calendar summary for teacher: {} for month: {}", teacher.getId(), yearMonth);
+
+            LocalDate monthStart = yearMonth.atDay(1);
+            LocalDate monthEnd = yearMonth.atEndOfMonth();
+            LocalDate today = LocalDate.now();
+
+            List<CalendarDaySummaryResponse> days = new ArrayList<>();
+            Random random = new Random();
+
+            // Generate sample data for each day in the month
+            for (LocalDate date = monthStart; !date.isAfter(monthEnd); date = date.plusDays(1)) {
+                CalendarDaySummaryResponse daySummary = CalendarDaySummaryResponse.builder()
+                        .date(date.toString())
+                        .dayOfWeek(date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+                        .hasDiaryEntry(random.nextBoolean())
+                        .hasEvents(random.nextBoolean())
+                        .hasMeetings(random.nextBoolean())
+                        .hasClasses(random.nextBoolean())
+                        .hasQuickNotes(random.nextBoolean())
+                        .diaryEntryCount(random.nextBoolean() ? random.nextInt(3) + 1 : 0L)
+                        .eventCount(random.nextBoolean() ? random.nextInt(2) + 1 : 0L)
+                        .meetingCount(random.nextBoolean() ? random.nextInt(2) + 1 : 0L)
+                        .classCount(random.nextBoolean() ? random.nextInt(5) + 1 : 0L)
+                        .quickNoteCount(random.nextBoolean() ? random.nextInt(3) + 1 : 0L)
+                        .dayType(date.getDayOfWeek().getValue() <= 5 ? "WEEKDAY" : "WEEKEND")
+                        .isToday(date.equals(today))
+                        .build();
+
+                days.add(daySummary);
+            }
+
+            // Calculate summary statistics
+            long totalDaysWithDiaryEntries = days.stream().mapToLong(d -> d.getHasDiaryEntry() ? 1 : 0).sum();
+            long totalDaysWithEvents = days.stream().mapToLong(d -> d.getHasEvents() ? 1 : 0).sum();
+            long totalDaysWithMeetings = days.stream().mapToLong(d -> d.getHasMeetings() ? 1 : 0).sum();
+            long totalDaysWithClasses = days.stream().mapToLong(d -> d.getHasClasses() ? 1 : 0).sum();
+            long totalDaysWithQuickNotes = days.stream().mapToLong(d -> d.getHasQuickNotes() ? 1 : 0).sum();
+
+            long totalDiaryEntries = days.stream().mapToLong(CalendarDaySummaryResponse::getDiaryEntryCount).sum();
+            long totalEvents = days.stream().mapToLong(CalendarDaySummaryResponse::getEventCount).sum();
+            long totalMeetings = days.stream().mapToLong(CalendarDaySummaryResponse::getMeetingCount).sum();
+            long totalClasses = days.stream().mapToLong(CalendarDaySummaryResponse::getClassCount).sum();
+            long totalQuickNotes = days.stream().mapToLong(CalendarDaySummaryResponse::getQuickNoteCount).sum();
+
+            long workingDays = days.stream().mapToLong(d -> "WEEKDAY".equals(d.getDayType()) ? 1 : 0).sum();
+            long weekendDays = days.stream().mapToLong(d -> "WEEKEND".equals(d.getDayType()) ? 1 : 0).sum();
+
+            MonthlyCalendarSummaryResponse summary = MonthlyCalendarSummaryResponse.builder()
+                    .teacherId(teacher.getId())
+                    .teacherName(teacher.getFirstName() + " " + teacher.getLastName())
+                    .month(yearMonth)
+                    .monthName(yearMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+                    .year(yearMonth.getYear())
+                    .days(days)
+                    .totalDaysWithDiaryEntries(totalDaysWithDiaryEntries)
+                    .totalDaysWithEvents(totalDaysWithEvents)
+                    .totalDaysWithMeetings(totalDaysWithMeetings)
+                    .totalDaysWithClasses(totalDaysWithClasses)
+                    .totalDaysWithQuickNotes(totalDaysWithQuickNotes)
+                    .totalDiaryEntries(totalDiaryEntries)
+                    .totalEvents(totalEvents)
+                    .totalMeetings(totalMeetings)
+                    .totalClasses(totalClasses)
+                    .totalQuickNotes(totalQuickNotes)
+                    .workingDays(workingDays)
+                    .weekendDays(weekendDays)
+                    .build();
+
+            log.info("Monthly calendar summary retrieved successfully (test mode)");
+            return ResponseEntity.ok(summary);
+
+        } catch (Exception e) {
+            log.error("Error getting monthly calendar summary: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Helper method
     private Teacher getAuthenticatedTeacher() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
@@ -157,46 +258,50 @@ public class DiaryEntryServiceImpl implements DiaryEntryService {
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
     }
 
-    private DiaryEntryResponse mapToResponse(DiaryEntry diaryEntry) {
+    private DiaryEntryResponse mapToResponse(Notes note) {
         try {
             // Get updated by teacher name if available
             String updatedByName = null;
-            if (diaryEntry.getUpdatedBy() != null) {
-                Teacher updatedByTeacher = teacherRepository.findById(diaryEntry.getUpdatedBy()).orElse(null);
-                if (updatedByTeacher != null) {
-                    updatedByName = updatedByTeacher.getFirstName() + " " + updatedByTeacher.getLastName();
+            if (note.getUpdatedBy() != null) {
+                try {
+                    Long updatedById = Long.parseLong(note.getUpdatedBy());
+                    Teacher updatedByTeacher = teacherRepository.findById(updatedById).orElse(null);
+                    if (updatedByTeacher != null) {
+                        updatedByName = updatedByTeacher.getFirstName() + " " + updatedByTeacher.getLastName();
+                    }
+                } catch (NumberFormatException e) {
+                    // If updatedBy is not a number, skip
                 }
             }
 
             return DiaryEntryResponse.builder()
-                    .id(diaryEntry.getId())
-                    .entryTitle(diaryEntry.getEntryTitle())
-                    .entryContent(diaryEntry.getEntryContent())
-                    .entryDate(diaryEntry.getEntryDate())
-                    .createdTime(diaryEntry.getCreatedTime())
-                    .updatedTime(diaryEntry.getUpdatedTime())
-                    .teacherId(diaryEntry.getTeacher() != null ? diaryEntry.getTeacher().getId() : null)
-                    .teacherName(diaryEntry.getTeacher() != null ? 
-                            diaryEntry.getTeacher().getFirstName() + " " + diaryEntry.getTeacher().getLastName() : null)
-                    .updatedBy(diaryEntry.getUpdatedBy())
+                    .id(note.getId())
+                    .entryTitle(note.getEntryTitle() != null ? note.getEntryTitle() : note.getTitle())
+                    .entryContent(note.getEntryContent() != null ? note.getEntryContent() : note.getDescription())
+                    .entryDate(note.getEntryDate())
+                    .createdTime(note.getCreatedTime() != null ? 
+                            LocalDateTime.parse(note.getCreatedTime().replace(" ", "T")) : LocalDateTime.now())
+                    .updatedTime(note.getUpdatedTime() != null ? 
+                            LocalDateTime.parse(note.getUpdatedTime().replace(" ", "T")) : LocalDateTime.now())
+                    .teacherId(note.getTeacherId())
+                    .teacherName(note.getTeacher() != null ? 
+                            note.getTeacher().getFirstName() + " " + note.getTeacher().getLastName() : null)
+                    .updatedBy(note.getUpdatedBy() != null ? Long.parseLong(note.getUpdatedBy()) : null)
                     .updatedByName(updatedByName)
                     .build();
         } catch (Exception e) {
             log.error("Error mapping diary entry to response: {}", e.getMessage());
             // Return basic response if mapping fails
             return DiaryEntryResponse.builder()
-                    .id(diaryEntry.getId())
-                    .entryTitle(diaryEntry.getEntryTitle())
-                    .entryContent(diaryEntry.getEntryContent())
-                    .entryDate(diaryEntry.getEntryDate())
-                    .createdTime(diaryEntry.getCreatedTime())
-                    .updatedTime(diaryEntry.getUpdatedTime())
-                    .teacherId(diaryEntry.getTeacher() != null ? diaryEntry.getTeacher().getId() : null)
-                    .teacherName(diaryEntry.getTeacher() != null ? 
-                            diaryEntry.getTeacher().getFirstName() + " " + diaryEntry.getTeacher().getLastName() : null)
-                    .updatedBy(diaryEntry.getUpdatedBy())
+                    .id(note.getId())
+                    .entryTitle(note.getEntryTitle() != null ? note.getEntryTitle() : note.getTitle())
+                    .entryContent(note.getEntryContent() != null ? note.getEntryContent() : note.getDescription())
+                    .entryDate(note.getEntryDate())
+                    .teacherId(note.getTeacherId())
+                    .teacherName(note.getTeacher() != null ? 
+                            note.getTeacher().getFirstName() + " " + note.getTeacher().getLastName() : null)
+                    .updatedBy(note.getUpdatedBy() != null ? Long.parseLong(note.getUpdatedBy()) : null)
                     .build();
         }
     }
-
-    }
+}

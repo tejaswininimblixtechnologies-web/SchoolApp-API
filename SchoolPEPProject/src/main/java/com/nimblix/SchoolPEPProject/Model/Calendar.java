@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -54,21 +55,72 @@ public class Calendar {
     @Column(name = "color")
     private String color;
 
-    @Column(name = "status")
-    private String status = "ACTIVE";
+    // ========== EVENT FIELDS ==========
+    
+    @Column(name = "event_date")
+    private LocalDate eventDate;  // For simple date events (no time)
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teacher_id", nullable = false)
+    @Column(name = "school_wide")
+    private Boolean schoolWide = false;  // School-wide flag
+
+    @Column(name = "applicable_classes", columnDefinition = "TEXT")
+    private String applicableClasses;  // JSON array of class IDs
+
+    @Column(name = "event_status")
+    private String eventStatus;  // ACTIVE, INACTIVE, DELETED
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
+    // ========== MEETING FIELDS ==========
+    
+    @Column(name = "meeting_title")
+    private String meetingTitle;  // For meetings
+
+    @Column(name = "meeting_date")
+    private LocalDate meetingDate;  // For meetings
+
+    @Column(name = "meeting_time")
+    private String meetingTime;  // For meetings
+
+    @Column(name = "participants", columnDefinition = "TEXT")
+    private String participants;  // For meetings
+
+    @Column(name = "meeting_notes", columnDefinition = "TEXT")
+    private String meetingNotes;  // For meetings
+
+    @Column(name = "meeting_status")
+    private String meetingStatus = "ACTIVE";  // For meetings
+
+    // ========== TEACHER RELATIONSHIP ==========
+    
+    @ManyToOne
+    @JoinColumn(name = "teacher_id")
     private Teacher teacher;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    // Note: teacherId is accessed through teacher.getId() to avoid duplicate column mapping
+
+    // Helper method to get teacher ID (for backward compatibility)
+    public Long getTeacherId() {
+        return teacher != null ? teacher.getId() : null;
+    }
+
+    // Helper method to set teacher ID (for backward compatibility)
+    public void setTeacherId(Long teacherId) {
+        // This method is for backward compatibility only
+        // The actual teacher relationship should be set via setTeacher()
+    }
+
+    @ManyToOne
     @JoinColumn(name = "classroom_id")
     private Classroom classroom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "subject_id")
     private Subjects subject;
 
+    // ========== TIMESTAMP FIELDS ==========
+    
     @Column(name = "created_time")
     private LocalDateTime createdTime;
 
@@ -77,12 +129,83 @@ public class Calendar {
 
     @PrePersist
     protected void onCreate() {
-        createdTime = LocalDateTime.now();
-        updatedTime = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        createdTime = now;
+        updatedTime = now;
+        
+        // Set default values for Event fields
+        if (eventStatus == null) {
+            eventStatus = "ACTIVE";
+        }
+        if (schoolWide == null) {
+            schoolWide = false;
+        }
+        if (isAllDay == null) {
+            isAllDay = false;
+        }
+        
+        // Set default values for Meeting fields
+        if (meetingStatus == null) {
+            meetingStatus = "ACTIVE";
+        }
+        
+        // If eventDate is not set but startDateTime is, extract date from startDateTime
+        if (eventDate == null && startDateTime != null) {
+            eventDate = startDateTime.toLocalDate();
+        }
+        
+        // Auto-populate fields for meetings
+        if (eventType == EventType.MEETING) {
+            if (eventTitle != null && meetingTitle == null) {
+                meetingTitle = eventTitle;
+            }
+            if (eventDescription != null && meetingNotes == null) {
+                meetingNotes = eventDescription;
+            }
+            if (eventDate != null && meetingDate == null) {
+                meetingDate = eventDate;
+            }
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedTime = LocalDateTime.now();
+        
+        // Update eventDate if startDateTime changed
+        if (startDateTime != null) {
+            eventDate = startDateTime.toLocalDate();
+        }
+        
+        // Sync fields for meetings
+        if (eventType == EventType.MEETING) {
+            if (meetingTitle != null) {
+                eventTitle = meetingTitle;
+            }
+            if (meetingNotes != null) {
+                eventDescription = meetingNotes;
+            }
+            if (meetingDate != null) {
+                eventDate = meetingDate;
+            }
+        }
+    }
+
+    // Helper method to set status based on event type
+    public void setStatus(String status) {
+        if (eventType == EventType.MEETING) {
+            this.meetingStatus = status;
+        } else {
+            this.eventStatus = status;
+        }
+    }
+
+    // Helper method to get status based on event type
+    public String getStatus() {
+        if (eventType == EventType.MEETING) {
+            return this.meetingStatus;
+        } else {
+            return this.eventStatus;
+        }
     }
 }
