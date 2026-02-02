@@ -2,6 +2,7 @@ package com.nimblix.SchoolPEPProject.Repository;
 
 import com.nimblix.SchoolPEPProject.Model.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -32,4 +33,12 @@ public interface StudentRepository extends JpaRepository<Student,Long> {
     Student findByStudentId(String studentId);
 
     Optional<Student> findByEmailId(String email);
+
+    List<Student> findByStatus(String status);
+
+    long countByStatus(String status);
+
+    @Modifying
+    @Query("UPDATE Student s SET s.status = :status WHERE s.status IS NULL OR s.status != :status")
+    int fixStudentStatus(@Param("status") String status);
 }

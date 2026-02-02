@@ -34,12 +34,34 @@ public class Student extends User {
     @Column(name = "roll_no")
     private Long rollNo;
 
+    @Column(name = "roll_number")
+    private String rollNumber;
+
     @Column(name = "admission_no")
     private Long admissionNo;
 
     @Column(name = "registration_no")
     private Long registrationNo;
 
+    @Column(name = "parent_name")
+    private String parentName;
+
+    @Column(name = "parent_contact")
+    private String parentContact;
+
+    @Column(name = "parent_email")
+    private String parentEmail;
+
     @ManyToMany(mappedBy = "students")
     private List<Parent> parents = new ArrayList<>();
+
+    // Helper method to get profile photo from parent User class
+    public String getProfilePhoto() {
+        return super.getProfilePicture();
+    }
+
+    // Helper method to set profile photo in parent User class
+    public void setProfilePhoto(String profilePhoto) {
+        super.setProfilePicture(profilePhoto);
+    }
 }

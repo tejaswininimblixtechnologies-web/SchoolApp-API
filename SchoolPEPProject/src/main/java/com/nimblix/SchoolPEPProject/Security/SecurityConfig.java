@@ -46,8 +46,15 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/**",
                                 "/school/**",
-                                "/teacher/**"
+                                "/teacher/**",
+                                "/student/register",
+                                "/student/details",
+                                "/admin/timetable/**",
+                                "/admin/**"  // All admin endpoints now in StudentDebugController
                         ).permitAll()
+                        .requestMatchers(
+                                "/student/**"
+                        ).hasRole("STUDENT")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
