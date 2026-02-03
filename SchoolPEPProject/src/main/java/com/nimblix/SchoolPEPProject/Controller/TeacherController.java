@@ -3,21 +3,20 @@ package com.nimblix.SchoolPEPProject.Controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
 import com.nimblix.SchoolPEPProject.Model.Teacher;
+import com.nimblix.SchoolPEPProject.Request.CalendarEventRequest;
 import com.nimblix.SchoolPEPProject.Request.ClassroomRequest;
 import com.nimblix.SchoolPEPProject.Request.ClassesConductedRequest;
 import com.nimblix.SchoolPEPProject.Request.CreateAssignmentRequest;
-import com.nimblix.SchoolPEPProject.Request.MeetingRequest;
 import com.nimblix.SchoolPEPProject.Request.OnboardSubjectRequest;
 import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
 import com.nimblix.SchoolPEPProject.Response.ClassesConductedResponse;
-import com.nimblix.SchoolPEPProject.Response.MeetingResponse;
+import com.nimblix.SchoolPEPProject.Response.CalendarEventResponse;
 import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
 import com.nimblix.SchoolPEPProject.Response.TeacherProfileResponse;
 import com.nimblix.SchoolPEPProject.Response.TeacherAssignedClassesResponse;
 import com.nimblix.SchoolPEPProject.Response.TeacherDiarySummaryResponse;
-import com.nimblix.SchoolPEPProject.Service.ClassesConductedService;
-import com.nimblix.SchoolPEPProject.Service.MeetingService;
-import com.nimblix.SchoolPEPProject.Service.SummaryService;
+import com.nimblix.SchoolPEPProject.Service.AdminService;
+import com.nimblix.SchoolPEPProject.Service.SchoolService;
 import com.nimblix.SchoolPEPProject.Service.TeacherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,9 +38,8 @@ import java.util.Map;
 public class TeacherController {
 
     private final TeacherService teacherService;
-    private final ClassesConductedService classesConductedService;
-    private final MeetingService meetingService;
-    private final SummaryService summaryService;
+    private final AdminService adminService;
+    private final SchoolService schoolService;
 
     // ========== TEACHER CONTEXT APIS (For Diary System) ==========
 
@@ -68,30 +66,30 @@ public class TeacherController {
     public ResponseEntity<TeacherDiarySummaryResponse> getTeacherDiarySummary(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth yearMonth) {
         log.info("Getting teacher diary summary for month: {}", yearMonth);
-        return summaryService.getTeacherDiarySummary(yearMonth);
+        return schoolService.getTeacherDiarySummary(yearMonth);
     }
 
     // Teacher Diary Summary by Year and Month
-    @GetMapping("/dashboard/teacher-diary-summary/{year}/{month}")
+    @GetMapping("/dashboard/summary/{year}/{month}")
     public ResponseEntity<TeacherDiarySummaryResponse> getTeacherDiarySummaryByYearMonth(
             @PathVariable Integer year,
             @PathVariable Integer month) {
         log.info("Getting teacher diary summary for year: {}, month: {}", year, month);
-        return summaryService.getTeacherDiarySummaryByYearMonth(year, month);
+        return schoolService.getTeacherDiarySummaryByYearMonth(year, month);
     }
 
     // Current Month Summary
     @GetMapping("/dashboard/current-month-summary")
     public ResponseEntity<TeacherDiarySummaryResponse> getCurrentMonthSummary() {
         log.info("Getting current month summary");
-        return summaryService.getCurrentMonthSummary();
+        return schoolService.getCurrentMonthSummary();
     }
 
     // Today's Summary
     @GetMapping("/dashboard/today-summary")
     public ResponseEntity<TeacherDiarySummaryResponse> getTodaySummary() {
         log.info("Getting today's summary");
-        return summaryService.getTodaySummary();
+        return schoolService.getTodaySummary();
     }
 
     // ========== CLASSES CONDUCTED ENDPOINTS (Moved from AcademicController) ==========
@@ -100,7 +98,7 @@ public class TeacherController {
     @PostMapping("/classes")
     public ResponseEntity<ClassesConductedResponse> createClass(@Valid @RequestBody ClassesConductedRequest request) {
         log.info("Creating class conducted for subjectId: {}", request.getSubjectId());
-        return classesConductedService.createClass(request);
+        return teacherService.createClass(request);
     }
 
     // Update Class Conducted
@@ -109,35 +107,35 @@ public class TeacherController {
             @PathVariable Long classId,
             @Valid @RequestBody ClassesConductedRequest request) {
         log.info("Updating class: {}", classId);
-        return classesConductedService.updateClass(classId, request);
+        return teacherService.updateClass(classId, request);
     }
 
     // Delete Class Conducted
     @DeleteMapping("/classes/{classId}")
     public ResponseEntity<String> deleteClass(@PathVariable Long classId) {
         log.info("Deleting class: {}", classId);
-        return classesConductedService.deleteClass(classId);
+        return teacherService.deleteClass(classId);
     }
 
     // Get Class by ID
     @GetMapping("/classes/{classId}")
     public ResponseEntity<ClassesConductedResponse> getClassById(@PathVariable Long classId) {
         log.info("Getting class: {}", classId);
-        return classesConductedService.getClassById(classId);
+        return teacherService.getClassById(classId);
     }
 
     // Get All Teacher Classes
     @GetMapping("/classes")
     public ResponseEntity<java.util.List<ClassesConductedResponse>> getTeacherClasses() {
         log.info("Getting all teacher classes");
-        return classesConductedService.getTeacherClasses();
+        return teacherService.getTeacherClasses();
     }
 
     // Get Classes by Date
     @GetMapping("/classes/date/{classDate}")
     public ResponseEntity<java.util.List<ClassesConductedResponse>> getClassesByDate(@PathVariable java.time.LocalDate classDate) {
         log.info("Getting classes for date: {}", classDate);
-        return classesConductedService.getClassesByDate(classDate);
+        return teacherService.getClassesByDate(classDate);
     }
 
     // Get Classes by Date Range
@@ -146,76 +144,85 @@ public class TeacherController {
             @RequestParam java.time.LocalDate startDate,
             @RequestParam java.time.LocalDate endDate) {
         log.info("Getting classes from {} to {}", startDate, endDate);
-        return classesConductedService.getClassesByDateRange(startDate, endDate);
+        return teacherService.getClassesByDateRange(startDate, endDate);
     }
 
     // Get Today's Classes
     @GetMapping("/classes/today")
     public ResponseEntity<java.util.List<ClassesConductedResponse>> getTodayClasses() {
         log.info("Getting today's classes");
-        return classesConductedService.getTodayClasses();
+        return teacherService.getTodayClasses();
     }
 
-    // ========== MEETINGS ENDPOINTS (Moved from AcademicController) ==========
+    // ========== MEETINGS ENDPOINTS (Now using AdminService - Calendar Events with MEETING type) ==========
 
-    // Add Meeting
+    // Add Meeting (as Calendar Event with MEETING type)
     @PostMapping("/meetings")
-    public ResponseEntity<MeetingResponse> createMeeting(@Valid @RequestBody MeetingRequest request) {
-        log.info("Creating meeting: {}", request.getMeetingTitle());
-        return meetingService.createMeeting(request);
+    public ResponseEntity<CalendarEventResponse> createMeeting(@Valid @RequestBody CalendarEventRequest request) {
+        log.info("Creating meeting: {}", request.getEventTitle());
+        // Set event type to MEETING for calendar events
+        // Note: You might need to add a method to set event type in the request or handle it in the service
+        return adminService.createEvent(request);
     }
 
     // Update Meeting
     @PutMapping("/meetings/{meetingId}")
-    public ResponseEntity<MeetingResponse> updateMeeting(
+    public ResponseEntity<CalendarEventResponse> updateMeeting(
             @PathVariable Long meetingId,
-            @Valid @RequestBody MeetingRequest request) {
+            @Valid @RequestBody CalendarEventRequest request) {
         log.info("Updating meeting: {}", meetingId);
-        return meetingService.updateMeeting(meetingId, request);
+        return adminService.updateEvent(meetingId, request);
     }
 
     // Delete Meeting
     @DeleteMapping("/meetings/{meetingId}")
     public ResponseEntity<String> deleteMeeting(@PathVariable Long meetingId) {
         log.info("Deleting meeting: {}", meetingId);
-        return meetingService.deleteMeeting(meetingId);
+        return adminService.deleteEvent(meetingId);
     }
 
     // Get Meeting by ID
     @GetMapping("/meetings/{meetingId}")
-    public ResponseEntity<MeetingResponse> getMeetingById(@PathVariable Long meetingId) {
+    public ResponseEntity<CalendarEventResponse> getMeetingById(@PathVariable Long meetingId) {
         log.info("Getting meeting: {}", meetingId);
-        return meetingService.getMeetingById(meetingId);
+        return adminService.getEventById(meetingId);
     }
 
-    // Get All Teacher Meetings
+    // Get All Teacher Meetings (filter calendar events for MEETING type)
     @GetMapping("/meetings")
-    public ResponseEntity<java.util.List<MeetingResponse>> getTeacherMeetings() {
+    public ResponseEntity<java.util.List<CalendarEventResponse>> getTeacherMeetings() {
         log.info("Getting all teacher meetings");
-        return meetingService.getTeacherMeetings();
+        // Note: You might need to add a method to filter events by type in the service
+        return adminService.getTeacherEvents();
     }
 
     // Get Meetings by Date
     @GetMapping("/meetings/date/{meetingDate}")
-    public ResponseEntity<java.util.List<MeetingResponse>> getMeetingsByDate(@PathVariable java.time.LocalDate meetingDate) {
+    public ResponseEntity<java.util.List<CalendarEventResponse>> getMeetingsByDate(@PathVariable java.time.LocalDate meetingDate) {
         log.info("Getting meetings for date: {}", meetingDate);
-        return meetingService.getMeetingsByDate(meetingDate);
+        // Convert LocalDate to LocalDateTime for the service call
+        java.time.LocalDateTime startDateTime = meetingDate.atStartOfDay();
+        java.time.LocalDateTime endDateTime = meetingDate.atTime(23, 59, 59);
+        return adminService.getTeacherEventsByDateRange(startDateTime, endDateTime);
     }
 
     // Get Meetings by Date Range
     @GetMapping("/meetings/range")
-    public ResponseEntity<java.util.List<MeetingResponse>> getMeetingsByDateRange(
+    public ResponseEntity<java.util.List<CalendarEventResponse>> getMeetingsByDateRange(
             @RequestParam java.time.LocalDate startDate,
             @RequestParam java.time.LocalDate endDate) {
         log.info("Getting meetings from {} to {}", startDate, endDate);
-        return meetingService.getMeetingsByDateRange(startDate, endDate);
+        // Convert LocalDate to LocalDateTime for the service call
+        java.time.LocalDateTime startDateTime = startDate.atStartOfDay();
+        java.time.LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+        return adminService.getTeacherEventsByDateRange(startDateTime, endDateTime);
     }
 
     // Get Today's Meetings
     @GetMapping("/meetings/today")
-    public ResponseEntity<java.util.List<MeetingResponse>> getTodayMeetings() {
+    public ResponseEntity<java.util.List<CalendarEventResponse>> getTodayMeetings() {
         log.info("Getting today's meetings");
-        return meetingService.getTodayMeetings();
+        return adminService.getUpcomingEvents();
     }
 
     // ========== EXISTING TEACHER APIS ==========
