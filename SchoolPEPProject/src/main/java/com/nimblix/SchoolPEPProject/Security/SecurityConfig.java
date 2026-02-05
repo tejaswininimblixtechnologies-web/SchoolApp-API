@@ -46,7 +46,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/**",
                                 "/school/**",
-                                "/teacher/**"
+                                "/teacher/**",
+                                "/admin/attendance/**"
+
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

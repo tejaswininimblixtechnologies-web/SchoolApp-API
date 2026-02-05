@@ -6,6 +6,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+
+/**
+ * Repository interface for Admin entity.
+ * Provides database access methods for admin-related operations.
+ */
+
 @Repository
 public interface AdminRepository extends JpaRepository<Admin,Long> {
 

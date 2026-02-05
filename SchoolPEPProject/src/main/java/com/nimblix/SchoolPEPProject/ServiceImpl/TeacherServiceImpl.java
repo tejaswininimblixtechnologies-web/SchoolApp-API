@@ -92,7 +92,8 @@ public class TeacherServiceImpl implements TeacherService {
         teacher.setSchoolId(1L); // TODO: get from logged-in admin
 
         // ✅ IMPORTANT FIXES
-        teacher.setStaffType(StaffType.TEACHING);
+        teacher.setStaffType(request.getStaffType());
+
         teacher.setDesignation(teacherDesignation);
 
         teacher.setRole(teacherRole);
@@ -477,6 +478,50 @@ public class TeacherServiceImpl implements TeacherService {
                 SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS,
                 SchoolConstants.MESSAGE, "Assignment deleted successfully"
         );
+    }
+    @Override
+    public ResponseEntity<Map<String, Object>> login(Map<String, String> request) {
+
+        String email = request.get("email");
+        String password = request.get("password");
+
+        Optional<Teacher> optionalTeacher =
+                teacherRepository.findByEmailId(email);
+
+        if (optionalTeacher.isEmpty()) {
+            return ResponseEntity.status(401).body(
+                    Map.of("message", "User not found")
+            );
+        }
+
+        Teacher teacher = optionalTeacher.get();
+
+        if (!passwordEncoder.matches(password, teacher.getPassword())) {
+            return ResponseEntity.status(401).body(
+                    Map.of("message", "Invalid credentials")
+            );
+        }
+
+        teacher.setIsLogin(true);
+        teacherRepository.save(teacher);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message", "Login successful",
+                        "staffType", teacher.getStaffType(),
+                        "teacherId", teacher.getId()
+                )
+        );
+    }
+    @Override
+    public Object getStaffByType(String staffType, Long schoolId) {
+
+        if (schoolId != null) {
+            return teacherRepository
+                    .findByStaffTypeAndSchoolId(staffType, schoolId);
+        }
+
+        return teacherRepository.findByStaffType(staffType);
     }
 
 }

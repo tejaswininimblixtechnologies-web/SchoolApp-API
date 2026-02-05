@@ -173,4 +173,21 @@ public class TeacherController {
         );
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, Object>> login(
+            @RequestBody Map<String, String> request) {
+        return teacherService.login(request);
+    }
+    @GetMapping("/staff")
+    public ResponseEntity<?> getStaffByType(
+            @RequestParam String staffType,
+            @RequestParam(required = false) Long schoolId) {
+
+        return ResponseEntity.ok(
+                teacherService.getStaffByType(staffType, schoolId)
+        );
+    }
+
+
+
 }

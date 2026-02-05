@@ -1,5 +1,6 @@
 package com.nimblix.SchoolPEPProject.Request;
 
+import com.nimblix.SchoolPEPProject.Enum.StaffType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,5 +16,5 @@ public class TeacherRegistrationRequest {
     private String password;
     private  Long schoolId;
     private String designation;
-
+    private StaffType staffType;
 }

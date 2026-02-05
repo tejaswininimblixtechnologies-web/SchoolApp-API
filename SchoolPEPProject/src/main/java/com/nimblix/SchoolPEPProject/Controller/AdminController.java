@@ -3,12 +3,15 @@ package com.nimblix.SchoolPEPProject.Controller;
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
 import com.nimblix.SchoolPEPProject.Model.Student;
 import com.nimblix.SchoolPEPProject.Request.AdminAccountCreateRequest;
+import com.nimblix.SchoolPEPProject.Request.MarkAttendanceRequest;
 import com.nimblix.SchoolPEPProject.Response.AdminProfileResponse;
 import com.nimblix.SchoolPEPProject.Service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.nimblix.SchoolPEPProject.Response.AttendanceReportResponse;
+
 
 import java.util.HashMap;
 import java.util.List;
@@ -88,7 +91,110 @@ public class AdminController {
         return adminService.getAdminProfile(adminId, schoolId);
     }
 
+    // Endpoint to mark student attendance
+
+    @PostMapping("/attendance/mark")
+    public ResponseEntity<?> markAttendance(
+            @RequestBody MarkAttendanceRequest request
+    ) {
+        try {
+            adminService.markStudentAttendance(request);
+            return ResponseEntity.ok(
+                    Map.of(SchoolConstants.MESSAGE, "Attendance marked successfully")
+            );
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of(SchoolConstants.MESSAGE, e.getMessage()));
+        }
+
     }
+
+
+
+    // Endpoint to get average attendance percentage
+
+    @GetMapping("/attendance/average")
+    public ResponseEntity<?> getAverageAttendance(
+            @RequestParam Long schoolId,
+            @RequestParam String date
+    ) {
+        return ResponseEntity.ok(
+                adminService.getAverageAttendance(schoolId, date)
+        );
+    }
+
+
+
+    // Endpoint to get total present count
+
+    @GetMapping("/attendance/present/count")
+    public ResponseEntity<?> getTotalPresentCount(
+            @RequestParam Long schoolId,
+            @RequestParam String date
+    ) {
+        try {
+            long presentCount = adminService.getTotalPresentCount(schoolId, date);
+            return ResponseEntity.ok(
+                    Map.of(
+                            "schoolId", schoolId,
+                            "date", date,
+                            "presentCount", presentCount
+                    )
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to fetch present count: " + e.getMessage()));
+        }
+    }
+    // Endpoint to get total absent count
+
+    @GetMapping("/attendance/absent/count")
+    public ResponseEntity<?> getTotalAbsentCount(
+            @RequestParam Long schoolId,
+            @RequestParam String date
+    ) {
+        long count = adminService.getTotalAbsentCount(schoolId, date);
+        return ResponseEntity.ok(Map.of("totalAbsent", count));
+    }
+    @GetMapping("/attendance/trend")
+    public ResponseEntity<List<AttendanceReportResponse>> getAttendanceTrend(
+            @RequestParam Long schoolId,
+            @RequestParam String fromDate,
+            @RequestParam String toDate
+    ) {
+        return ResponseEntity.ok(
+                adminService.getAttendanceTrend(
+                        schoolId,
+                        fromDate,
+                        toDate
+                )
+        );
+    }
+
+
+    // Endpoint to get class-wise attendance with pagination and sorting
+    @GetMapping("/attendance/class-wise")
+    public ResponseEntity<?> getClassWiseAttendance(
+            @RequestParam Long schoolId,
+            @RequestParam String date,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "class") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        try {
+            return ResponseEntity.ok(
+                    adminService.getClassWiseAttendance(schoolId, date, page, size, sortBy, sortDir)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to fetch class-wise attendance: " + e.getMessage()));
+        }
+    }
+
+
+
+}
 
 
 
