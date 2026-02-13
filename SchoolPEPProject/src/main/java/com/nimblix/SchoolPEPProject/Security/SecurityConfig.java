@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -22,7 +23,6 @@ public class SecurityConfig {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
-    // 🔹 REQUIRED FIX
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration) throws Exception {
@@ -47,9 +47,16 @@ public class SecurityConfig {
                                 "/auth/**",
                                 "/school/**",
                                 "/teacher/**",
+                                "/student/register",
+                                "/student/login",
+                                "/student/details",
+                                "/student/*/profile",
                                 "/admin/attendance/**"
-
                         ).permitAll()
+
+
+                        .requestMatchers(HttpMethod.PUT, "/student/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/student/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
