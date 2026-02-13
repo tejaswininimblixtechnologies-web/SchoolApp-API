@@ -1,15 +1,14 @@
 package com.nimblix.SchoolPEPProject.ServiceImpl;
+
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
 import com.nimblix.SchoolPEPProject.Enum.StaffType;
 import com.nimblix.SchoolPEPProject.Exception.UserNotFoundException;
 import com.nimblix.SchoolPEPProject.Model.Designation;
 import com.nimblix.SchoolPEPProject.Model.Role;
 import com.nimblix.SchoolPEPProject.Model.Student;
-import com.nimblix.SchoolPEPProject.Model.User;
 import com.nimblix.SchoolPEPProject.Repository.DesignationRepository;
 import com.nimblix.SchoolPEPProject.Repository.RoleRepository;
 import com.nimblix.SchoolPEPProject.Repository.StudentRepository;
-//import com.nimblix.SchoolPEPProject.Repository.UserRepository;
 import com.nimblix.SchoolPEPProject.Request.StudentRegistrationRequest;
 import com.nimblix.SchoolPEPProject.Response.StudentDetailsResponse;
 import com.nimblix.SchoolPEPProject.Service.StudentService;
@@ -19,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -43,30 +41,33 @@ public class StudentServiceImpl implements StudentService {
                     .body("Email already registered!");
         }
 
-        // Fetch role (SECURITY)
         Role studentRole =
                 roleRepository.findByRoleName(SchoolConstants.STUDENT);
 
-        // Fetch designation (BUSINESS)
-        Designation studentDesignation =
-                designationRepository
-                        .findByDesignationName(SchoolConstants.STUDENT)
-                        .orElseThrow(() ->
-                                new RuntimeException("Student designation not found"));
-
         Student student = new Student();
+        student.setMobile(request.getMobile());
+        student.setClassId(request.getClassId());
+        student.setSection(request.getSection());
+
         student.setFirstName(request.getFirstName());
         student.setLastName(request.getLastName());
         student.setEmailId(request.getEmail());
         student.setPassword(passwordEncoder.encode(request.getPassword()));
         student.setSchoolId(request.getSchoolId());
-
+        student.setMobile(request.getMobile());
+        student.setClassId(request.getClassId());
+        student.setSection(request.getSection());
+        student.setMobile(request.getMobile());
+        student.setClassId(request.getClassId());
+        student.setSection(request.getSection());
+        student.setSchoolId(request.getSchoolId());
+        student.setMobile(request.getMobile());
+        student.setClassId(request.getClassId());
+        student.setSection(request.getSection());
+        student.setSchoolId(request.getSchoolId());
         student.setStatus(SchoolConstants.ACTIVE);
         student.setIsLogin(Boolean.FALSE);
 
-        // ✅ IMPORTANT FIXES
-        student.setStaffType(StaffType.NON_TEACHING); // Students are NOT staff
-        student.setDesignation(studentDesignation);
         student.setRole(studentRole);
 
         Student savedStudent = studentRepository.save(student);
@@ -76,14 +77,18 @@ public class StudentServiceImpl implements StudentService {
         );
     }
 
+
     @Override
     public void updateStudentDetails(Long studentId, StudentRegistrationRequest request) {
 
         Student existingStudent = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
 
-        if(request.getFirstName()!=null && request.getLastName()!=null){
+        if (request.getFirstName() != null) {
             existingStudent.setFirstName(request.getFirstName());
+        }
+
+        if (request.getLastName() != null) {
             existingStudent.setLastName(request.getLastName());
         }
 
@@ -139,16 +144,34 @@ public class StudentServiceImpl implements StudentService {
                 .toList();
     }
 
-
     @Override
     public void deleteStudent(Long studentId) {
 
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
 
-        // Soft delete
-//        student.setStatus(SchoolConstants.IN_ACTIVE);
         studentRepository.delete(student);
-//        studentRepository.save(student);
+    }
+
+    @Override
+    public StudentDetailsResponse getStudentProfile(Long studentId) {
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        return StudentDetailsResponse.builder()
+                .id(student.getId())
+                .firstName(student.getFirstName())
+                .lastName(student.getLastName())
+                .emailId(student.getEmailId())
+                .mobile(student.getMobile())
+                .schoolId(student.getSchoolId())
+                .status(student.getStatus())
+                .classId(student.getClassId())
+                .section(student.getSection())
+                .roleName(
+                        student.getRole() != null ? student.getRole().getRoleName() : null
+                )
+                .build();
     }
 }

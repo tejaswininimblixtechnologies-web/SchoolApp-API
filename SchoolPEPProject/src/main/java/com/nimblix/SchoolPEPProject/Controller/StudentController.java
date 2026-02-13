@@ -22,18 +22,15 @@ public class StudentController {
 
     private final StudentService studentService;
 
-
-    /*
-    In this API we are registering the student. It will help to onboard the student, In this we are storing the  student
-    fullName,emailId and password.
-     */
+    // REGISTER STUDENT
     @PostMapping("/register")
-    public ResponseEntity<?> studentRegistration(@RequestBody StudentRegistrationRequest request) {
+    public ResponseEntity<?> studentRegistration(
+            @RequestBody StudentRegistrationRequest request) {
+
         Map<String, Object> response = new HashMap<>();
 
         try {
             studentService.registerStudent(request);
-
             response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS);
             response.put(SchoolConstants.MESSAGE, "Student Registration Successful!");
             return ResponseEntity.ok(response);
@@ -45,105 +42,104 @@ public class StudentController {
         }
     }
 
- /*
-       This API is used to fetch the student details by using the student I'd.
- */
-
+    // GET STUDENTS BY SCHOOL
     @GetMapping("/details")
-    public ResponseEntity<Map<String, Object>> getStudentsBySchoolId(
-            @RequestParam Long schoolId) {
+    public ResponseEntity<?> getStudentsBySchoolId(@RequestParam Long schoolId) {
 
-        List<StudentDetailsResponse> students =
-                studentService.getStudentsBySchoolId(schoolId);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS);
-        response.put(SchoolConstants.MESSAGE, "Students fetched successfully");
-        response.put("data", students);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                Map.of(
+                        SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS,
+                        "data", studentService.getStudentsBySchoolId(schoolId)
+                )
+        );
     }
 
-
-    @PostMapping("/update")
+    // UPDATE STUDENT
+    @PutMapping("/{studentId}")
     public ResponseEntity<?> updateStudent(
-            @RequestParam Long studentId,
+            @PathVariable Long studentId,
             @RequestBody StudentRegistrationRequest request) {
 
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            studentService.updateStudentDetails(studentId, request);
-            response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS);
-            response.put(SchoolConstants.MESSAGE, "Student updated successfully");
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_FAILURE);
-            response.put(SchoolConstants.MESSAGE, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+        studentService.updateStudentDetails(studentId, request);
+        return ResponseEntity.ok(
+                Map.of(
+                        SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS,
+                        SchoolConstants.MESSAGE, "Student updated successfully"
+                )
+        );
     }
 
+    // DELETE STUDENT
+    @DeleteMapping("/{studentId}")
+    public ResponseEntity<?> deleteStudent(@PathVariable Long studentId) {
 
-
-        @PostMapping("/delete")
-        public ResponseEntity<?> deleteStudent(@RequestParam Long studentId) {
-            Map<String, Object> response = new HashMap<>();
-
-            try {
-                studentService.deleteStudent(studentId);
-                response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS);
-                response.put(SchoolConstants.MESSAGE, "Student deleted successfully");
-                return ResponseEntity.ok(response);
-
-            } catch (Exception e) {
-                response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_FAILURE);
-                response.put(SchoolConstants.MESSAGE, e.getMessage());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
-        }
-
-
-
-        @PutMapping("/update")
-        public ResponseEntity<?> updateStudentPut(
-                @RequestParam Long studentId,
-                @RequestBody StudentRegistrationRequest request) {
-
-            Map<String, Object> response = new HashMap<>();
-
-            try {
-                studentService.updateStudentDetails(studentId, request);
-                response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS);
-                response.put(SchoolConstants.MESSAGE, "Student updated successfully (PUT)");
-                return ResponseEntity.ok(response);
-
-            } catch (Exception e) {
-                response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_FAILURE);
-                response.put(SchoolConstants.MESSAGE, e.getMessage());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
-        }
-
-
-
-        @DeleteMapping("/delete")
-        public ResponseEntity<?> deleteStudentDelete(@RequestParam Long studentId) {
-            Map<String, Object> response = new HashMap<>();
-
-            try {
-                studentService.deleteStudent(studentId);
-                response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS);
-                response.put(SchoolConstants.MESSAGE, "Student deleted successfully (DELETE)");
-                return ResponseEntity.ok(response);
-
-            } catch (Exception e) {
-                response.put(SchoolConstants.STATUS, SchoolConstants.STATUS_FAILURE);
-                response.put(SchoolConstants.MESSAGE, e.getMessage());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
-        }
+        studentService.deleteStudent(studentId);
+        return ResponseEntity.ok(
+                Map.of(
+                        SchoolConstants.STATUS, SchoolConstants.STATUS_SUCCESS,
+                        SchoolConstants.MESSAGE, "Student deleted successfully"
+                )
+        );
     }
+
+    // STUDENT DASHBOARD APIs
+    @GetMapping("/{studentId}/profile")
+    public ResponseEntity<?> getStudentProfile(@PathVariable Long studentId) {
+        return ResponseEntity.ok(studentService.getStudentProfile(studentId));
+    }
+
+    @GetMapping("/{studentId}/attendance")
+    public ResponseEntity<?> getStudentAttendance(@PathVariable Long studentId) {
+        return ResponseEntity.ok(Map.of("data", "Attendance integration pending"));
+    }
+
+    @GetMapping("/{studentId}/grades")
+    public ResponseEntity<?> getStudentGrades(@PathVariable Long studentId) {
+        return ResponseEntity.ok(Map.of("data", "Grades integration pending"));
+    }
+
+    @GetMapping("/{studentId}/assignments")
+    public ResponseEntity<?> getAssignments(@PathVariable Long studentId) {
+        return ResponseEntity.ok(Map.of("data", "Assignments list"));
+    }
+
+    @PostMapping("/{studentId}/assignments/{assignmentId}/submit")
+    public ResponseEntity<?> submitAssignment(
+            @PathVariable Long studentId,
+            @PathVariable Long assignmentId) {
+
+        return ResponseEntity.ok(
+                Map.of(SchoolConstants.MESSAGE, "Assignment submitted successfully")
+        );
+    }
+
+    @GetMapping("/{studentId}/fees")
+    public ResponseEntity<?> getFees(@PathVariable Long studentId) {
+        return ResponseEntity.ok(Map.of("data", "Fee status"));
+    }
+
+    @GetMapping("/{studentId}/reports")
+    public ResponseEntity<?> getReports(@PathVariable Long studentId) {
+        return ResponseEntity.ok(Map.of("data", "Academic reports"));
+    }
+
+    @GetMapping("/{studentId}/certificates")
+    public ResponseEntity<?> getCertificates(@PathVariable Long studentId) {
+        return ResponseEntity.ok(Map.of("data", "Certificates"));
+    }
+
+    @PostMapping("/{studentId}/leave-request")
+    public ResponseEntity<?> requestLeave(@PathVariable Long studentId) {
+        return ResponseEntity.ok(
+                Map.of(SchoolConstants.MESSAGE, "Leave request submitted")
+        );
+    }
+
+    @GetMapping("/{studentId}/notifications")
+    public ResponseEntity<?> getNotifications(@PathVariable Long studentId) {
+        return ResponseEntity.ok(Map.of("data", "Notifications"));
+    }
+
+}
 
 

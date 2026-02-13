@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
+
 public interface StudentService {
     ResponseEntity<?> registerStudent(StudentRegistrationRequest studentRegistrationRequest);
 
@@ -18,6 +18,8 @@ public interface StudentService {
     void updateStudentDetails(Long studentId, StudentRegistrationRequest request);
 
     List<StudentDetailsResponse> getStudentsBySchoolId(Long schoolId);
+    StudentDetailsResponse getStudentProfile(Long studentId);
+
 
 //    void updateStudentDetails(Integer studentId, StudentRegistrationRequest request);
 }

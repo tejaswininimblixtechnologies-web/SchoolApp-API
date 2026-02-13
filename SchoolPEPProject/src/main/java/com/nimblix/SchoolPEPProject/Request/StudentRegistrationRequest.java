@@ -14,5 +14,9 @@ public class StudentRegistrationRequest {
     private String password;
     private String reEnterPassword;
     private Long schoolId;
+    private String mobile;
+    private Long classId;
+    private String section;
+
 
 }
