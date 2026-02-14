@@ -1,6 +1,7 @@
 package com.nimblix.SchoolPEPProject.Controller;
 
 import com.nimblix.SchoolPEPProject.Model.StudentMarks;
+import com.nimblix.SchoolPEPProject.Request.StudentMarksRequest;
 import com.nimblix.SchoolPEPProject.Service.StudentMarksService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -40,5 +41,10 @@ public class StudentMarksController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=marks.csv")
                 .contentType(MediaType.parseMediaType("text/csv"))
                 .body(csv.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @PostMapping
+    public ResponseEntity<StudentMarks> addMarks(@RequestBody StudentMarksRequest request) {
+        return ResponseEntity.ok(studentMarksService.saveOrUpdateMarks(request));
     }
 }

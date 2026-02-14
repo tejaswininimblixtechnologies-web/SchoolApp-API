@@ -1,15 +1,19 @@
 package com.nimblix.SchoolPEPProject.Service;
 
+import com.nimblix.SchoolPEPProject.Model.StudyMaterial;
 import com.nimblix.SchoolPEPProject.Model.Teacher;
 import com.nimblix.SchoolPEPProject.Request.ClassroomRequest;
 import com.nimblix.SchoolPEPProject.Request.CreateAssignmentRequest;
 import com.nimblix.SchoolPEPProject.Request.OnboardSubjectRequest;
 import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
+import com.nimblix.SchoolPEPProject.Response.StudyMaterialResponse;
 import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
+import com.nimblix.SchoolPEPProject.Model.Assignments;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
+import java.util.List;
 
 public interface TeacherService {
     Map<String, String> registerTeacher(TeacherRegistrationRequest request);
@@ -34,4 +38,11 @@ public interface TeacherService {
 
     Map<String, String> deleteAssignment(Long assignmentId, Long subjectId);
 
+    Map<String, Object> getTeacherDashboard(Long teacherId);
+
+    List<Assignments> getAssignmentsByTeacherId(Long teacherId);
+
+    List<Map<String, Object>> getTimetableByClassId(Long classId);
+
+    List<StudyMaterialResponse> getStudyMaterials(Long teacherId);
 }

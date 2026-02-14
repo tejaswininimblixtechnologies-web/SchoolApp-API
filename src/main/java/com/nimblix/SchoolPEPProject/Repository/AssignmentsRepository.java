@@ -9,4 +9,6 @@ public interface AssignmentsRepository extends JpaRepository<Assignments,Long> {
 
     Optional<Assignments> findByIdAndSubjectId(Long id, Long subjectId);
 
+    long countByCreatedByUserId(Long teacherId);
+
 }
