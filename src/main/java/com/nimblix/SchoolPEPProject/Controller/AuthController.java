@@ -65,14 +65,13 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of(SchoolConstants.MESSAGE, SchoolConstants.ROLE_MISMATCH));
 
-            if (SchoolConstants.STUDENT.equals(dbRole)) {
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
                                 request.getEmail(),
                                 request.getPassword()
                         )
                 );
-            }
+
 
             String token = jwtUtil.generateToken(
                     userDetailsService.loadUserByUsername(request.getEmail())

@@ -20,4 +20,6 @@ public interface StudentService {
     List<StudentDetailsResponse> getStudentsBySchoolId(Long schoolId);
 
 //    void updateStudentDetails(Integer studentId, StudentRegistrationRequest request);
+
+    List<StudentDetailsResponse> getAllStudents();
 }

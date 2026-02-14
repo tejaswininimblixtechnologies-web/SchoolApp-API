@@ -12,4 +12,6 @@ public interface ClassroomRepository extends JpaRepository<Classroom,Long> {
     boolean existsByIdAndSchoolId(Long id, Long schoolId);
 
     Optional<Object> findByIdAndSchoolId(Long classRoomId, Long schoolId);
+
+    long countByTeacherId(String teacherId);
 }

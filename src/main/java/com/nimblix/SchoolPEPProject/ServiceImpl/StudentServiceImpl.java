@@ -151,4 +151,24 @@ public class StudentServiceImpl implements StudentService {
         studentRepository.delete(student);
 //        studentRepository.save(student);
     }
+
+    @Override
+    public List<StudentDetailsResponse> getAllStudents() {
+
+        List<Student> students = studentRepository.findAll();
+
+        return students.stream()
+                .map(student -> StudentDetailsResponse.builder()
+                        .id(student.getId())
+                        .firstName(student.getFirstName())
+                        .lastName(student.getLastName())
+                        .emailId(student.getEmailId())
+                        .mobile(student.getMobile())
+                        .status(student.getStatus())
+                        .classId(student.getClassId())
+                        .section(student.getSection())
+                        .build()
+                )
+                .toList();
+    }
 }

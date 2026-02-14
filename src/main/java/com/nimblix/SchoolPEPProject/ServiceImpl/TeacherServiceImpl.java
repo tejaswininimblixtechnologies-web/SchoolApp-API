@@ -11,10 +11,14 @@ import com.nimblix.SchoolPEPProject.Request.CreateAssignmentRequest;
 import com.nimblix.SchoolPEPProject.Request.OnboardSubjectRequest;
 import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
 import com.nimblix.SchoolPEPProject.Response.MultipleImageResponse;
+import com.nimblix.SchoolPEPProject.Response.StudyMaterialResponse;
 import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
 import com.nimblix.SchoolPEPProject.Service.TeacherService;
 import com.nimblix.SchoolPEPProject.Util.UserIdGeneratorUtil;
 import com.nimblix.SchoolPEPProject.Enum.UserType;
+import com.nimblix.SchoolPEPProject.Model.Assignments;
+import com.nimblix.SchoolPEPProject.Model.Subjects;
+import com.nimblix.SchoolPEPProject.Model.Teacher;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -28,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @RequiredArgsConstructor
 @Service
@@ -45,6 +50,7 @@ public class TeacherServiceImpl implements TeacherService {
     private final PasswordEncoder passwordEncoder;
     private final UploadImageHelper  uploadImageHelper;
     private final DesignationRepository designationRepository;
+    private final StudyMaterialRepository studyMaterialRepository;
 
     Map<String, String> response = new HashMap<>();
 
@@ -479,4 +485,97 @@ public class TeacherServiceImpl implements TeacherService {
         );
     }
 
+    @Override
+    public Map<String, Object> getTeacherDashboard(Long teacherId) {
+
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+        long subjectCount = subjectRepository.countByTeacher_Id(teacherId);
+
+        long classroomCount = classroomRepository.countByTeacherId(teacher.getTeacherId());
+
+        long assignmentCount = assignmentsRepository.countByCreatedByUserId(teacherId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("teacherName", teacher.getFirstName() + " " + teacher.getLastName());
+        response.put("email", teacher.getEmailId());
+        response.put("totalSubjects", subjectCount);
+        response.put("totalClassrooms", classroomCount);
+        response.put("totalAssignments", assignmentCount);
+
+        return response;
+    }
+
+    @Override
+    public List<Assignments> getAssignmentsByTeacherId(Long teacherId) {
+        //  Validate teacher exists
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+        // Get all subjects taught by this teacher
+        List<Subjects> subjects = teacher.getSubjects();
+
+        //  Fetch assignments for these subjects
+        List<Assignments> assignments = new ArrayList<>();
+        for (Subjects subject : subjects) {
+            assignments.addAll(assignmentsRepository.findAll().stream()
+                    .filter(a -> a.getSubjectId().equals(subject.getId()) && !"INACTIVE".equals(a.getStatus()))
+                    .toList());
+        }
+        return assignments;
+    }
+
+    @Override
+    public List<Map<String, Object>> getTimetableByClassId(Long classId) {
+
+        // Validate classroom exists
+        Classroom classroom = classroomRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Classroom not found"));
+
+        // Get all subjects for this classroom
+        List<Subjects> subjects = subjectRepository.findAll()
+                .stream()
+                .filter(s -> s.getClassRoomId().equals(classId))
+                .toList();
+
+        // Prepare timetable response
+        List<Map<String, Object>> timetable = new ArrayList<>();
+
+        for (Subjects subject : subjects) {
+
+            Map<String, Object> row = new HashMap<>();
+            row.put("classroom", classroom.getClassroomName());
+            row.put("subject", subject.getSubjectName());
+
+            if (subject.getTeacher() != null) {
+                row.put("teacherName",
+                        subject.getTeacher().getFirstName() + " " +
+                                subject.getTeacher().getLastName());
+            } else {
+                row.put("teacherName", "Not Assigned");
+            }
+
+            timetable.add(row);
+        }
+
+        return timetable;
+    }
+
+    @Override
+    public List<StudyMaterialResponse> getStudyMaterials(Long teacherId) {
+
+        List<StudyMaterial> materials =
+                studyMaterialRepository.findByTeacherId(teacherId);
+
+        return materials.stream().map(material -> {
+            StudyMaterialResponse response = new StudyMaterialResponse();
+            response.setId(material.getId());
+            response.setTitle(material.getTitle());
+            response.setDescription(material.getDescription());
+            response.setFileUrl(material.getFileUrl());
+            response.setCreatedTime(material.getCreatedTime());
+            return response;
+        }).toList();
+    }
 }

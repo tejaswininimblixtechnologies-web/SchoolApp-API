@@ -13,4 +13,5 @@ public interface SubjectRepository extends JpaRepository<Subjects,Long> {
             Long classRoomId,
             Long teacherId
     );
+    long countByTeacher_Id(Long teacherId);
 }

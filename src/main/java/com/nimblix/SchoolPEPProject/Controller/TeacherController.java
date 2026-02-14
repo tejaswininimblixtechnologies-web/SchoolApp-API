@@ -2,13 +2,16 @@ package com.nimblix.SchoolPEPProject.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimblix.SchoolPEPProject.Constants.SchoolConstants;
+import com.nimblix.SchoolPEPProject.Model.StudyMaterial;
 import com.nimblix.SchoolPEPProject.Model.Teacher;
 import com.nimblix.SchoolPEPProject.Request.ClassroomRequest;
 import com.nimblix.SchoolPEPProject.Request.CreateAssignmentRequest;
 import com.nimblix.SchoolPEPProject.Request.OnboardSubjectRequest;
 import com.nimblix.SchoolPEPProject.Request.TeacherRegistrationRequest;
+import com.nimblix.SchoolPEPProject.Response.StudyMaterialResponse;
 import com.nimblix.SchoolPEPProject.Response.TeacherDetailsResponse;
 import com.nimblix.SchoolPEPProject.Service.TeacherService;
+import com.nimblix.SchoolPEPProject.Model.Assignments;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/teacher")
@@ -64,59 +68,13 @@ public class TeacherController {
         return teacherService.createClassroom(request);
     }
 
-    @PostMapping(
-            value = "/createAssignment",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PostMapping("/createAssignment")
     public ResponseEntity<Map<String, String>> createAssignment(
-            @RequestPart String assignmentJson,
-            @RequestPart MultipartFile[] files
+            @RequestBody CreateAssignmentRequest request
     ) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            CreateAssignmentRequest request =
-                    objectMapper.readValue(assignmentJson, CreateAssignmentRequest.class);
-
-            return ResponseEntity.ok(
-                    teacherService.createAssignment(request, files)
-            );
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                    Map.of(
-                            SchoolConstants.STATUS,SchoolConstants.STATUS_ERORR ,
-                            SchoolConstants.MESSAGE, "Invalid assignment payload"
-                    )
-            );
-        }
-    }
-
-
-    @PostMapping(
-            value = "/updateAssignment",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
-    public ResponseEntity<Map<String, String>> updateAssignment(
-            @RequestPart String assignmentJson,
-            @RequestPart(required = false) MultipartFile[] files
-    ) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            CreateAssignmentRequest request =
-                    objectMapper.readValue(assignmentJson, CreateAssignmentRequest.class);
-
-            return ResponseEntity.ok(
-                    teacherService.updateAssignment(request, files)
-            );
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                    Map.of(
-                            SchoolConstants.STATUS, SchoolConstants.STATUS_ERORR,
-                            SchoolConstants.MESSAGE, "Invalid assignment payload"
-                    )
-            );
-        }
+        // Call service with no files
+        Map<String, String> response = teacherService.createAssignment(request, null);
+        return ResponseEntity.ok(response);
     }
 
 
@@ -173,4 +131,36 @@ public class TeacherController {
         );
     }
 
+    @GetMapping("/dashboard")
+    public ResponseEntity<Map<String, Object>> getTeacherDashboard(
+            @RequestParam Long teacherId) {
+
+        return ResponseEntity.ok(
+                teacherService.getTeacherDashboard(teacherId)
+        );
+    }
+
+    @GetMapping("/assignments")
+    public ResponseEntity<List<Assignments>> getAssignments(@RequestParam Long teacherId) {
+        List<Assignments> assignments = teacherService.getAssignmentsByTeacherId(teacherId);
+        return ResponseEntity.ok(assignments);
+    }
+
+    @GetMapping("/timetable/{classId}")
+    public ResponseEntity<List<Map<String, Object>>> getTimetable(
+            @PathVariable Long classId) {
+
+        return ResponseEntity.ok(
+                teacherService.getTimetableByClassId(classId)
+        );
+    }
+
+    @GetMapping("/materials/{teacherId}")
+    public ResponseEntity<List<StudyMaterialResponse>> getMaterials(
+            @PathVariable Long teacherId) {
+
+        return ResponseEntity.ok(
+                teacherService.getStudyMaterials(teacherId)
+        );
+    }
 }
